@@ -273,14 +273,14 @@ get_tar(){
     TARFILE=$(basename $(find $WORKDIR -name 'percona-xtrabackup*.tar.gz' | sort | tail -n1))
     if [ -z $TARFILE ]
     then
-        TARFILE=$(basename $(find $CURDIR -name 'percona-xtrabackup*.tar.gz' | sort | tail -n1))
+        TARFILE=$(basename $(find $CURDIR/ -name 'percona-xtrabackup*.tar.gz' | sort | tail -n1))
         if [ -z $TARFILE ]
         then
             echo "There is no source tarball for build"
             echo "You can create it using key --get_sources=1"
             exit 1
         else
-            cp $CURDIR/$TARFILE $WORKDIR
+            cp $CURDIR/$TARFILE $WORKDIR/$TARFILE
         fi
     fi
     return
@@ -299,8 +299,7 @@ get_deb_sources(){
             echo "You can create it using key --get_sources=1"
             exit 1
         else
-            cp $CURDIR/$FILE $WORKDIR
-            ls $WORKDIR
+            cp $CURDIR/$FILE $WORKDIR/$TARFILE
         fi
     fi
     return
@@ -386,8 +385,7 @@ build_source_deb(){
         exit 1
     fi
     get_tar
-    cd $WORKDIR
-    tar vxzf $WORKDIR/$TARFILE --wildcards '*/XB_VERSION'
+    tar vxzf $TARFILE --wildcards '*/XB_VERSION'
     dirname=$(echo $TARFILE | awk -F'.tar' '{print $1}')
     cd $dirname
     for line in $(cat XB_VERSION)
@@ -452,9 +450,9 @@ build_deb(){
     VERSION=$(echo $DSC | sed -e 's:_:-:g' | awk -F'-' '{print $4}' | awk -F'.' '{print $1}')
     ARCH=$(uname -m)
     dpkg-source -x $DSC
-    ls
-    cd $DIRNAME
-    cp -av storage/innobase/xtrabackup/utils/debian .
+    new_dir=$(ls -d */ | grep percona-xtrabackup)
+    #cd $DIRNAME
+    cd $new_dir
     VER=$(echo $DIRNAME | sed -e 's:percona-xtrabackup-::')
     dch -m -D "$DEBIAN_VERSION" --force-distribution -v "$VER-$DEB_RELEASE.$DEBIAN_VERSION" 'Update distribution'
     dpkg-buildpackage -rfakeroot -uc -us -b
@@ -470,11 +468,11 @@ build_tarball(){
         echo "Binary tarball will not be created"
         return;
     fi
-    if [ "x$OS" = "xdeb" -o "x$RHEL" != "x6" ]
-    then
-        echo "It is not possible to build binary tarball here"
-        exit 1
-    fi
+    #if [ "x$OS" = "xdeb" -o "x$RHEL" != "x6" ]
+    #then
+    #    echo "It is not possible to build binary tarball here"
+    #    exit 1
+    #fi
     get_tar
     cd $WORKDIR
     dirname=`tar -tzf $TARFILE | head -1 | cut -f1 -d"/"`
