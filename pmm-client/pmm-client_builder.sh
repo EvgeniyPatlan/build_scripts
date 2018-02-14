@@ -16,6 +16,7 @@ Usage: $0 [OPTIONS]
         --build_deb         If it is 1 deb will be built
         --build_tarball     If it is 1 tarball will be built
         --install_deps      Install build dependencies(root previlages are required)
+        --branch            Branch from which submodules should be taken(default master)
         --help) usage ;;
 Example $0 --builddir=/tmp/PMM_CLIENT --get_sources=1 --build_src_rpm=1 --build_rpm=1
 EOF
@@ -46,7 +47,7 @@ parse_arguments() {
             --build_deb=*) DEB="$val" ;;
             --get_sources=*) SOURCE="$val" ;;
             --build_tarball=*) TARBALL="$val" ;;
-            --branch=*) BRANCH="$val" ;;
+            --branch=*) SUBMODULE_BRANCH="$val" ;;
             --install_deps=*) INSTALL="$val" ;;
             --help) usage ;;      
             *)
@@ -61,7 +62,8 @@ parse_arguments() {
 
 get_branches() {
     if [ ! -e .gitmodules ]; then
-        wget https://raw.githubusercontent.com/Percona-Lab/pmm-submodules/master/.gitmodules
+        link="https://raw.githubusercontent.com/Percona-Lab/pmm-submodules/$SUBMODULE_BRANCH/.gitmodules"
+        wget $link
     fi
     COMPONENT=$1
     PARAM=$2
@@ -658,6 +660,7 @@ REPO=$(get_branches "pmm-client" "url")
 INSTALL=0
 RPM_RELEASE=1
 DEB_RELEASE=1
+SUBMODULE_BRANCH="master"
 REVISION=0
 MongoExp_BRANCH_NAME=$(get_branches "mongodb_exporter" "branch")
 MongoExp_REPO=$(get_branches "mongodb_exporter" "url")
