@@ -146,8 +146,8 @@ get_sources(){
     echo "REVISION=${REVISION}" >> $VERSION_FILE
     echo "RPM_RELEASE=${RPM_RELEASE}" >> $VERSION_FILE
     echo "DEB_RELEASE=${DEB_RELEASE}" >> $VERSION_FILE
-    echo "GIT_REPO=${GIT_REPO}" >> $VERSION_FILE
-    echo "BRANCH_NAME=${BRANCH_NAME}" >> $VERSION_FILE
+    echo "GIT_REPO=${REPO}" >> $VERSION_FILE
+    echo "BRANCH_NAME=${BRANCH}" >> $VERSION_FILE
     echo "NodeExp_BRANCH_NAME=${NodeExp_BRANCH_NAME}" >> $VERSION_FILE
     echo "MongoExp_BRANCH_NAME=${MongoExp_BRANCH_NAME}" >> $VERSION_FILE
     echo "MysqlExp_BRANCH_NAME=${MysqlExp_BRANCH_NAME}" >> $VERSION_FILE
@@ -163,8 +163,7 @@ get_sources(){
     echo "PRODUCT_FULL=${PRODUCT_FULL}" >> $VERSION_FILE
     echo "BUILD_NUMBER=${BUILD_NUMBER}" >> $VERSION_FILE
     echo "BUILD_ID=${BUILD_ID}" >> $VERSION_FILE
-    echo "DESTINATION=experimental" >> $VERSION_FILE
-    echo "UPLOAD=UPLOAD/${DESTINATION}/BUILDS/${PRODUCT_NAME}/${VERSION}/${BRANCH_NAME}/${REVISION}/${BUILD_ID}" >> $VERSION_FILE
+    echo "UPLOAD=UPLOAD/experimental/BUILDS/${PRODUCT_NAME}/${VERSION}/${BRANCH_NAME}/${REVISION}/${BUILD_ID}" >> $VERSION_FILE
     cd ../
     mv ${PRODUCT} ${PRODUCT}-${VERSION}
     
@@ -463,7 +462,7 @@ build_deb(){
         echo "It is not possible to build source deb here"
         exit 1
     fi
-    for file in 'dsc' 'orig.tar.gz' 'changes'
+    for file in 'dsc' 'orig.tar.gz' 'changes' 'diff.gz'
     do
         get_deb_sources $file
     done
