@@ -141,30 +141,30 @@ get_sources(){
     #
     VERSION=$(cat VERSION)
     mv Makefile build/
-    cat VERSION > $VERSION_FILE
-    echo "VERSION=${VERSION}" > pmm-client.properties
-    echo "REVISION=${REVISION}" >> pmm-client.properties
-    echo "RPM_RELEASE=${RPM_RELEASE}" >> pmm-client.properties
-    echo "DEB_RELEASE=${DEB_RELEASE}" >> pmm-client.properties
-    echo "GIT_REPO=${GIT_REPO}" >> pmm-client.properties
-    echo "BRANCH_NAME=${BRANCH_NAME}" >> pmm-client.properties
-    echo "NodeExp_BRANCH_NAME=${NodeExp_BRANCH_NAME}" >> pmm-client.properties
-    echo "MongoExp_BRANCH_NAME=${MongoExp_BRANCH_NAME}" >> pmm-client.properties
-    echo "MysqlExp_BRANCH_NAME=${MysqlExp_BRANCH_NAME}" >> pmm-client.properties
-    echo "ProxysqlExp_BRANCH_NAME=${ProxysqlExp_BRANCH_NAME}" >> pmm-client.properties
-    echo "QAN_BRANCH_NAME=${QAN_BRANCH_NAME}" >> pmm-client.properties
-    echo "TOOLKIT_REPO=${TOOLKIT_REPO}" >> pmm-client.properties
-    echo "TOOLKIT_BRANCH_NAME=${TOOLKIT_BRANCH_NAME}" >> pmm-client.properties
+    #cat VERSION > $VERSION_FILE
+    echo "VERSION=${VERSION}" > $VERSION_FILE
+    echo "REVISION=${REVISION}" >> $VERSION_FILE
+    echo "RPM_RELEASE=${RPM_RELEASE}" >> $VERSION_FILE
+    echo "DEB_RELEASE=${DEB_RELEASE}" >> $VERSION_FILE
+    echo "GIT_REPO=${GIT_REPO}" >> $VERSION_FILE
+    echo "BRANCH_NAME=${BRANCH_NAME}" >> $VERSION_FILE
+    echo "NodeExp_BRANCH_NAME=${NodeExp_BRANCH_NAME}" >> $VERSION_FILE
+    echo "MongoExp_BRANCH_NAME=${MongoExp_BRANCH_NAME}" >> $VERSION_FILE
+    echo "MysqlExp_BRANCH_NAME=${MysqlExp_BRANCH_NAME}" >> $VERSION_FILE
+    echo "ProxysqlExp_BRANCH_NAME=${ProxysqlExp_BRANCH_NAME}" >> $VERSION_FILE
+    echo "QAN_BRANCH_NAME=${QAN_BRANCH_NAME}" >> $VERSION_FILE
+    echo "TOOLKIT_REPO=${TOOLKIT_REPO}" >> $VERSION_FILE
+    echo "TOOLKIT_BRANCH_NAME=${TOOLKIT_BRANCH_NAME}" >> $VERSION_FILE
     PRODUCT=pmm-client
     PRODUCT_NAME=pmm
-    echo "PRODUCT=${PRODUCT}" >> pmm-client.properties
-    echo "PRODUCT_NAME=${PRODUCT_NAME}" >> pmm-client.properties
+    echo "PRODUCT=${PRODUCT}" >> $VERSION_FILE
+    echo "PRODUCT_NAME=${PRODUCT_NAME}" >> $VERSION_FILE
     PRODUCT_FULL=${PRODUCT}-${VERSION}
-    echo "PRODUCT_FULL=${PRODUCT_FULL}" >> pmm-client.properties
-    echo "BUILD_NUMBER=${BUILD_NUMBER}" >> pmm-client.properties
-    echo "BUILD_ID=${BUILD_ID}" >> pmm-client.properties
-    echo "DESTINATION=${DESTINATION}" >> pmm-client.properties
-    echo "UPLOAD=UPLOAD/${DESTINATION}/BUILDS/${PRODUCT_NAME}/${VERSION}/${BRANCH_NAME}/${REVISION}/${BUILD_ID}" >> pmm-client.properties
+    echo "PRODUCT_FULL=${PRODUCT_FULL}" >> $VERSION_FILE
+    echo "BUILD_NUMBER=${BUILD_NUMBER}" >> $VERSION_FILE
+    echo "BUILD_ID=${BUILD_ID}" >> $VERSION_FILE
+    echo "DESTINATION=experimental" >> $VERSION_FILE
+    echo "UPLOAD=UPLOAD/${DESTINATION}/BUILDS/${PRODUCT_NAME}/${VERSION}/${BRANCH_NAME}/${REVISION}/${BUILD_ID}" >> $VERSION_FILE
     cd ../
     mv ${PRODUCT} ${PRODUCT}-${VERSION}
     
@@ -474,8 +474,8 @@ build_deb(){
     DIRNAME=$(echo ${DSC} | sed -e 's:_:-:g' | awk -F'-' '{print $1"-"$2}')
     VERSION=$(echo ${DSC} | sed -e 's:_:-:g' | awk -F'-' '{print $3}')
     ARCH=$(uname -m)
-    echo "DEBIAN_VERSION=${DEBIAN_VERSION}" >> pmm-client.properties
-    echo "ARCH=${ARCH}" >> pmm-client.properties
+    echo "DEBIAN_VERSION=${DEBIAN_VERSION}" >> $VERSION_FILE
+    echo "ARCH=${ARCH}" >> $VERSION_FILE
     #
     dpkg-source -x ${DSC}
     cd ${DIRNAME}-${VERSION}
@@ -574,7 +574,7 @@ build_tarball(){
     
     cp distro/${NAME}-${VERSION}-*.tar.gz ${WORKDIR}/${NAME}-${VERSION}.tar.gz
     cd ${WORKDIR}
-    rm -rf `ls | grep -v tar.gz| grep -v pmm-client.properties`
+    rm -rf `ls | grep -v tar.gz| grep -v $VERSION_FILE`
     cd ${WORKDIR}
     tar -xvzf ${NAME}-${VERSION}.tar.gz
     
