@@ -66,9 +66,9 @@ get_branches() {
         git clone https://github.com/Percona-Lab/pmm-submodules.git
     fi
     cd pmm-submodules
-      git reset --hard
-      git clean -xdf
-      git checkout $SUBMODULE_BRANCH
+      git reset --hard > /dev/null 2>&1
+      git clean -xdf > /dev/null 2>&1
+      git checkout $SUBMODULE_BRANCH > /dev/null 2>&1
       git submodule status | grep $COMPONENT | awk '{print $1}' | awk -F'-' '{print $2}'
     cd ../
 }
@@ -79,9 +79,9 @@ get_repos() {
         git clone https://github.com/Percona-Lab/pmm-submodules.git
     fi
     cd pmm-submodules
-      git reset --hard
-      git clean -xdf
-      git checkout $SUBMODULE_BRANCH
+      git reset --hard > /dev/null 2>&1
+      git clean -xdf > /dev/null 2>&1
+      git checkout $SUBMODULE_BRANCH > /dev/null 2>&1
       grep -A 3 "\[submodule \"${COMPONENT}\"\]" .gitmodules | grep "url" | awk '{print $3}'
     cd ../
 }
@@ -697,13 +697,15 @@ TARBALL=0
 OS_NAME=
 ARCH=
 OS=
-BRANCH=$(get_branches "pmm-client" "branch")
-REPO=$(get_branches "pmm-client" "url")
+SUBMODULE_BRANCH="master"
 INSTALL=0
 RPM_RELEASE=1
 DEB_RELEASE=1
-SUBMODULE_BRANCH="master"
 REVISION=0
+parse_arguments PICK-ARGS-FROM-ARGV "$@"
+
+BRANCH=$(get_branches "pmm-client" "branch")
+REPO=$(get_repos "pmm-client")
 MongoExp_BRANCH_NAME=$(get_branches "mongodb_exporter")
 MongoExp_REPO=$(get_repos "mongodb_exporter")
 TOOLKIT_BRANCH_NAME=$(get_branches "percona-toolkit")
@@ -717,7 +719,6 @@ QAN_REPO=$(get_repos "qan-agent")
 NodeExp_BRANCH_NAME=$(get_branches "node_exporter")
 NodeExp_REPO=$(get_repos "node_exporter")
 
-parse_arguments PICK-ARGS-FROM-ARGV "$@"
 check_workdir
 get_system
 install_deps
