@@ -61,13 +61,29 @@ parse_arguments() {
 }
 
 get_branches() {
-    if [ ! -e .gitmodules ]; then
-        link="https://raw.githubusercontent.com/Percona-Lab/pmm-submodules/$SUBMODULE_BRANCH/.gitmodules"
-        wget $link
-    fi
     COMPONENT=$1
-    PARAM=$2
-    grep -A 3 "\[submodule \"${COMPONENT}\"\]" .gitmodules | grep ${PARAM} | awk '{print $3}'  
+    if [ ! -e pmm-submodules ]; then
+        git clone https://github.com/Percona-Lab/pmm-submodules.git
+    fi
+    cd pmm-submodules
+      git reset --hard
+      git clean -xdf
+      git checkout $SUBMODULE_BRANCH
+      git submodule status | grep $COMPONENT | awk '{print $1}' | awk -F'-' '{print $2}'
+    cd ../
+}
+
+get_repos() {
+    COMPONENT=$1
+    if [ ! -e pmm-submodules ]; then
+        git clone https://github.com/Percona-Lab/pmm-submodules.git
+    fi
+    cd pmm-submodules
+      git reset --hard
+      git clean -xdf
+      git checkout $SUBMODULE_BRANCH
+      grep -A 3 "\[submodule \"${COMPONENT}\"\]" .gitmodules | grep "url" | awk '{print $3}'
+    cd ../
 }
 
 check_workdir(){
@@ -136,6 +152,8 @@ get_sources(){
     cd pmm-client
     if [ ! -z $BRANCH ]
     then
+        git reset --hard
+        git clean -xdf
         git checkout $BRANCH
     fi
     REVISION=$(git rev-parse --short HEAD)
@@ -166,6 +184,12 @@ get_sources(){
     echo "BUILD_NUMBER=${BUILD_NUMBER}" >> $VERSION_FILE
     echo "BUILD_ID=${BUILD_ID}" >> $VERSION_FILE
     echo "UPLOAD=UPLOAD/experimental/BUILDS/${PRODUCT_NAME}/${VERSION}/${BRANCH_NAME}/${REVISION}/${BUILD_ID}" >> $VERSION_FILE
+    echo "MongoExp_REPO=${MongoExp_REPO}" >> $VERSION_FILE
+    echo "TOOLKIT_REPO=${TOOLKIT_REPO}" >> $VERSION_FILE
+    echo "MysqlExp_REPO=${MysqlExp_REPO}" >> $VERSION_FILE
+    echo "ProxysqlExp_REPO=${ProxysqlExp_REPO}" >> $VERSION_FILE
+    echo "QAN_REPO=${QAN_REPO}" >> $VERSION_FILE
+    echo "NodeExp_REPO=${NodeExp_REPO}" >> $VERSION_FILE
     cd ../
     mv ${PRODUCT} ${PRODUCT}-${VERSION}
     
@@ -315,6 +339,8 @@ build_srpm(){
     pushd pmm-client-$VERSION
         git fetch origin
         if [ ! -z ${BRANCH} ]; then
+            git reset --hard
+            git clean -xdf
             git checkout ${BRANCH}
         fi
     popd
@@ -408,6 +434,8 @@ build_source_deb(){
     push ${NAME}-${VERSION}_all
         git fetch origin
         if [ ! -z ${BRANCH} ]; then
+            git reset --hard
+            git clean -xdf
             git checkout ${BRANCH}
         fi
     popd
@@ -518,6 +546,8 @@ build_tarball(){
         cd mongodb_exporter
             git fetch origin
             if [ ! -z ${MongoExp_BRANCH_NAME} ]; then
+                git reset --hard
+                git clean -xdf
                 git checkout ${MongoExp_BRANCH_NAME}
             fi
         cd ../
@@ -526,6 +556,8 @@ build_tarball(){
         cd mysqld_exporter
             git fetch origin
             if [ ! -z ${MysqlExp_BRANCH_NAME} ]; then
+                git reset --hard
+                git clean -xdf
                 git checkout ${MysqlExp_BRANCH_NAME}
             fi
         cd ../
@@ -534,6 +566,8 @@ build_tarball(){
         cd proxysql_exporter
             git fetch origin
             if [ ! -z ${ProxysqlExp_BRANCH_NAME} ]; then
+                git reset --hard
+                git clean -xdf
                 git checkout ${ProxysqlExp_BRANCH_NAME}
             fi
         cd ../
@@ -542,6 +576,8 @@ build_tarball(){
         cd pmm-client
             git fetch origin
             if [ ! -z ${BRANCH} ]; then
+                git reset --hard
+                git clean -xdf
                 git checkout ${BRANCH}
             fi
         cd ../
@@ -550,6 +586,8 @@ build_tarball(){
         cd qan-agent
             git fetch origin
             if [ ! -z ${QAN_BRANCH_NAME} ]; then
+                git reset --hard
+                git clean -xdf
                 git checkout ${QAN_BRANCH_NAME}
             fi
         cd ../
@@ -562,6 +600,8 @@ build_tarball(){
         cd node_exporter
             git fetch origin
             if [ ! -z ${NodeExp_BRANCH_NAME} ]; then
+                git reset --hard
+                git clean -xdf
                 git checkout ${NodeExp_BRANCH_NAME}
             fi
         cd ../
@@ -599,6 +639,8 @@ build_tarball(){
     cd percona-toolkit
         git fetch origin
         if [ ! -z ${TOOLKIT_BRANCH_NAME} ]; then
+            git reset --hard
+            git clean -xdf
             git checkout ${TOOLKIT_BRANCH_NAME}
         fi
     cd ../
@@ -662,18 +704,18 @@ RPM_RELEASE=1
 DEB_RELEASE=1
 SUBMODULE_BRANCH="master"
 REVISION=0
-MongoExp_BRANCH_NAME=$(get_branches "mongodb_exporter" "branch")
-MongoExp_REPO=$(get_branches "mongodb_exporter" "url")
-TOOLKIT_BRANCH_NAME=$(get_branches "percona-toolkit" "branch")
-TOOLKIT_REPO=$(get_branches "percona-toolkit" "url")
-MysqlExp_BRANCH_NAME=$(get_branches "mysqld_exporter" "branch")
-MysqlExp_REPO=$(get_branches "mysqld_exporter" "url")
-ProxysqlExp_BRANCH_NAME=$(get_branches "proxysql_exporter" "branch")
-ProxysqlExp_REPO=$(get_branches "proxysql_exporter" "url")
-QAN_BRANCH_NAME=$(get_branches "qan-agent" "branch")
-QAN_REPO=$(get_branches "qan-agent" "url")
-NodeExp_BRANCH_NAME=$(get_branches "node_exporter" "branch")
-NodeExp_REPO=$(get_branches "node_exporter" "url")
+MongoExp_BRANCH_NAME=$(get_branches "mongodb_exporter")
+MongoExp_REPO=$(get_repos "mongodb_exporter")
+TOOLKIT_BRANCH_NAME=$(get_branches "percona-toolkit")
+TOOLKIT_REPO=$(get_repos "percona-toolkit")
+MysqlExp_BRANCH_NAME=$(get_branches "mysqld_exporter")
+MysqlExp_REPO=$(get_repos "mysqld_exporter")
+ProxysqlExp_BRANCH_NAME=$(get_branches "proxysql_exporter")
+ProxysqlExp_REPO=$(get_repos "proxysql_exporter")
+QAN_BRANCH_NAME=$(get_branches "qan-agent")
+QAN_REPO=$(get_repos "qan-agent")
+NodeExp_BRANCH_NAME=$(get_branches "node_exporter")
+NodeExp_REPO=$(get_repos "node_exporter")
 
 parse_arguments PICK-ARGS-FROM-ARGV "$@"
 check_workdir
