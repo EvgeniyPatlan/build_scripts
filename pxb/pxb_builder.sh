@@ -236,7 +236,8 @@ install_deps() {
             echo "Unsupported OS version"
             exit 1
         fi
-        pip2.7 install sphinx alabaster babel snowballstemmer Pygments Jinja2 six
+        pip2.7 install --upgrade sphinx alabaster babel snowballstemmer Pygments Jinja2 six
+        #pip2.7 install sphinx alabaster babel snowballstemmer Pygments Jinja2 six
         cd $WORKDIR
         link="https://raw.githubusercontent.com/percona/percona-xtrabackup/2.3/storage/innobase/xtrabackup/utils/percona-xtrabackup.spec"
         link_ver="https://raw.githubusercontent.com/percona/percona-xtrabackup/2.3/XB_VERSION"
