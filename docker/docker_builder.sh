@@ -257,11 +257,11 @@ check_running() {
   RUNNING=$(docker ps --filter status=running | grep -c container-name_${DOCKER_NAME})
   if [ ${RUNNING} = 0 ]; then
     CONTAINER=$(docker ps | grep container-name_${DOCKER_NAME} | awk '{print $1}')
-    echo "${red} Docker ${DOKCER_NAME} is not running!${reset}"
+    echo "${red} Docker ${DOCKER_NAME} is not running!${reset}"
     docker logs ${CONTAINER}
     exit 1
   else
-    echo "${green} Docker ${DOKCER_NAME} is running correctly!${reset}"
+    echo "${green} Docker ${DOCKER_NAME} is running correctly!${reset}"
   fi
 }
 
