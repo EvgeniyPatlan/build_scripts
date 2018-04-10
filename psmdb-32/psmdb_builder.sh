@@ -724,11 +724,14 @@ build_tarball(){
     
     cd ${PSMDIR_ABS}
     tar --owner=0 --group=0 -czf ${WORKDIR}/${PSMDIR}-${OS_RELEASE}-${ARCH}${TARBALL_SUFFIX}.tar.gz ${PSMDIR}
-        
-    mkdir -p ${WORKDIR}/tarball
-    mkdir -p ${CURDIR}/tarball
-    cp ${WORKDIR}/${PSMDIR}-${OS_RELEASE}-${ARCH}${TARBALL_SUFFIX}.tar.gz ${WORKDIR}/tarball
-    cp ${WORKDIR}/${PSMDIR}-${OS_RELEASE}-${ARCH}${TARBALL_SUFFIX}.tar.gz ${CURDIR}/tarball
+    DIRNAME="tarball"
+    if [ "${DEBUG}" = 1 ]; then
+      DIRNAME="debug"
+    fi
+    mkdir -p ${WORKDIR}/${DIRNAME}
+    mkdir -p ${CURDIR}/${DIRNAME}
+    cp ${WORKDIR}/${PSMDIR}-${OS_RELEASE}-${ARCH}${TARBALL_SUFFIX}.tar.gz ${WORKDIR}/${DIRNAME}
+    cp ${WORKDIR}/${PSMDIR}-${OS_RELEASE}-${ARCH}${TARBALL_SUFFIX}.tar.gz ${CURDIR}/${DIRNAME}
 }
 
 #main
