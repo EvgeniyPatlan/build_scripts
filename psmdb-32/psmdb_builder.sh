@@ -21,10 +21,6 @@ Usage: $0 [OPTIONS]
         --psm_ver           PSM_VER(mandatory)
         --psm_release       PSM_RELEASE(mandatory)
         --mongo_tools_tag   MONGO_TOOLS_TAG(mandatory)
-        --ftindex_tag      	FTINDEX_TAG(mandatory)
-        --jemalloc_tag    	JEMALLOC_TAG(mandatory)
-        --rocksdb_tag       ROCKSDB_TAG(mandatory)
-        --tokubackup_branch TOKUBACKUP_BRANCH(mandatory)
         --debug             build debug tarball
         
         --help) usage ;;
@@ -61,11 +57,6 @@ parse_arguments() {
             --install_deps=*) INSTALL="$val" ;;
             --psm_ver=*) PSM_VER="$val" ;;
             --psm_release=*) PSM_RELEASE="$val" ;;
-            --mongo_tools_tag=*) MONGO_TOOLS_TAG="$val" ;;
-            --ftindex_tag=*) FTINDEX_TAG="$val" ;;
-            --jemalloc_tag=*) JEMALLOC_TAG="$val" ;;
-            --rocksdb_tag=*) ROCKSDB_TAG="$val" ;;
-            --tokubackup_branch=*) TOKUBACKUP_BRANCH="$val" ;;
             --debug=*) DEBUG="$val" ;;
             --help) usage ;;      
             *)
@@ -144,8 +135,6 @@ get_sources(){
     echo "VERSION=${PSM_VER}" >> percona-server-mongodb-32.properties
     echo "RELEASE=$PSM_RELEASE" >> percona-server-mongodb-32.properties
     echo "PSM_BRANCH=${PSM_BRANCH}" >> percona-server-mongodb-32.properties
-    echo "FTINDEX_TAG=${FTINDEX_TAG}" >> percona-server-mongodb-32.properties
-    echo "JEMALLOC_TAG=${JEMALLOC_TAG}" >> percona-server-mongodb-32.properties
     echo "MONGO_TOOLS_TAG=${MONGO_TOOLS_TAG}" >> percona-server-mongodb-32.properties
     echo "BUILD_NUMBER=${BUILD_NUMBER}" >> percona-server-mongodb-32.properties
     echo "BUILD_ID=${BUILD_ID}" >> percona-server-mongodb-32.properties
@@ -694,7 +683,7 @@ build_tarball(){
     #
     mkdir -p ${PSMDIR}/bin
     if [ ${DEBUG} = 0 ]; then
-      for target in ${PSM_TARGETS[@]}; do
+      for target in "${PSM_TARGETS[@]}"; do
         cp -f $target ${PSMDIR}/bin
         strip --strip-debug ${PSMDIR}/bin/${target}
       done
@@ -760,10 +749,6 @@ VERSION=${PSM_VER}
 PSM_RELEASE="3.10"
 RELEASE=${PSM_RELEASE}
 MONGO_TOOLS_TAG="r3.2.19"
-FTINDEX_TAG="psmdb-3.2.19-3.10"
-JEMALLOC_TAG="psmdb-3.2.19-3.10"
-ROCKSDB_TAG="v4.4"
-TOKUBACKUP_BRANCH="psmdb-3.2.19-3.10"
 PRODUCT=percona-server-mongodb
 DEBUG=0
 PRODUCT_FULL=${PRODUCT}-${PSM_VER}-${PSM_RELEASE}
