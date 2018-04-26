@@ -587,38 +587,45 @@ build_tarball(){
     get_tar "source_tarball"
     cd $WORKDIR
     TARFILE=$(basename $(find . -name 'percona-server-mongodb-*.tar.gz' | sort | tail -n1))
-    
-    
+
     if [ -f /opt/percona-devtoolset/enable ]; then
-      source /opt/percona-devtoolset/enable
+    source /opt/percona-devtoolset/enable
     fi
     #
+    export DEBIAN_VERSION="$(lsb_release -sc)"
+    export DEBIAN="$(lsb_release -sc)"
     export PATH=/usr/local/go/bin:$PATH
     #
     if [ -f /etc/debian_version ]; then
-        export CC=gcc-4.8
-        export CXX=g++-4.8
-    else  
-      export CC=$(which gcc)
-      export CXX=$(which g++)
-    fi
-    #
-    
-    PSM_TARGETS="mongod mongos mongo mongobridge"
-    TARBALL_SUFFIX=""
-    if [ ${DEBUG} = 1 ]; then
-      TARBALL_SUFFIX=".dbg"
-    fi
-    if [ -f /etc/debian_version ]; then
-      export OS_RELEASE="$(lsb_release -sc)"
-    fi
-    #
-    if [ -f /etc/redhat-release ]; then
-      export OS_RELEASE="centos$(lsb_release -sr | awk -F'.' '{print $1}')"
-      RHEL=$(rpm --eval %rhel)
+        if [ x"${DEBIAN}" = xwheezy -o x"${DEBIAN}" = xjessie -o x"${DEBIAN}" = xtrusty -o x"${DEBIAN}" = xxenial ]; then
+            export CC=/usr/local/gcc-5.4.0/bin/gcc-5.4
+            export CXX=/usr/local/gcc-5.4.0/bin/g++-5.4
+        else
+            export CC=gcc-5
+            export CXX=g++-5
+        fi
+    else
+        export CC=/usr/local/gcc-5.4.0/bin/gcc-5.4
+        export CXX=/usr/local/gcc-5.4.0/bin/g++-5.4
+        
     fi
     #
 
+    PSM_TARGETS="mongod mongos mongo mongobridge"
+    TARBALL_SUFFIX=""
+    if [ ${DEBUG} = 1 ]; then
+    TARBALL_SUFFIX=".dbg"
+    fi
+    if [ -f /etc/debian_version ]; then
+    export OS_RELEASE="$(lsb_release -sc)"
+    fi
+    #
+    if [ -f /etc/redhat-release ]; then
+    #export OS_RELEASE="centos$(lsb_release -sr | awk -F'.' '{print $1}')"
+    export OS_RELEASE="centos$(rpm --eval %rhel)"
+    RHEL=$(rpm --eval %rhel)
+    fi
+    #
     ARCH=$(uname -m 2>/dev/null||true)
     TARFILE=$(basename $(find . -name 'percona-server-mongodb-*.tar.gz' | sort | grep -v "tools" | tail -n1))
     PSMDIR=${TARFILE%.tar.gz}
@@ -627,7 +634,7 @@ build_tarball(){
     TOOLSDIR_ABS=${WORKDIR}/${TOOLSDIR}
     TOOLS_TAGS="ssl sasl"
     NJOBS=4
-    
+
     tar xzf $TARFILE
     rm -f $TARFILE
 
@@ -638,68 +645,37 @@ build_tarball(){
     export CFLAGS="${CFLAGS:-} -fno-omit-frame-pointer"
     export CXXFLAGS="${CFLAGS}"
     if [ ${DEBUG} = 1 ]; then
-      export CXXFLAGS="${CFLAGS} -Wno-error=deprecated-declarations"
+    export CXXFLAGS="${CFLAGS} -Wno-error=deprecated-declarations"
     fi
     export INSTALLDIR=${WORKDIR}/install
     export PORTABLE=1
     export USE_SSE=1
     #
-    # TokuBackup
-    pushd $PSMDIR/src/third_party/Percona-TokuBackup/backup
-    if [ ${DEBUG} = 0 ]; then
-      cmake . -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=/ -DBUILD_STATIC_LIBRARY=ON
-    else
-      cmake . -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=/ -DBUILD_STATIC_LIBRARY=ON
-    fi
-    make -j$NJOBS
-    make install DESTDIR=${INSTALLDIR}
-    popd
-    # PerconaFT
-    pushd $PSMDIR/src/third_party/PerconaFT
-    if [ ${DEBUG} = 0 ]; then
-      cmake . -DCMAKE_BUILD_TYPE=Release -DUSE_VALGRIND=OFF -DTOKU_DEBUG_PARANOID=OFF -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=/ -DJEMALLOC_SOURCE_DIR=${PSMDIR_ABS}/src/third_party/jemalloc
-    else
-      cmake . -DCMAKE_BUILD_TYPE=Debug -DUSE_VALGRIND=OFF -DTOKU_DEBUG_PARANOID=OFF -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=/ -DJEMALLOC_SOURCE_DIR=${PSMDIR_ABS}/src/third_party/jemalloc
-    fi
-    make -j$NJOBS VERBOSE=1
-    make install DESTDIR=${INSTALLDIR}
-    popd
-    #
     # RocksDB
     pushd ${PSMDIR}/src/third_party/rocksdb
-    # static liblz4.a
-    rm -rf lz4-r127 || true
-    wget https://codeload.github.com/Cyan4973/lz4/tar.gz/r127
-    mv r127 lz4-r127.tar.gz
-    tar xvzf lz4-r127.tar.gz
-    pushd lz4-r127/lib
     if [ ${DEBUG} = 0 ]; then
-      make CFLAGS=' -O3 -I. -std=c99 -Wall -Wextra -Wundef -Wshadow -Wcast-align -Wstrict-prototypes -pedantic -fPIC' all
+        make -j4 EXTRA_CFLAGS='-fPIC -DLZ4 -I../lz4-r131 -DSNAPPY -I../snappy-1.1.3 -DHAVE_SSE42' EXTRA_CXXFLAGS='-fPIC -DLZ4 -I../lz4-r131 -DSNAPPY -I../snappy-1.1.3 -DHAVE_SSE42' DISABLE_JEMALLOC=1 static_lib
     else
-      make CFLAGS=' -g -I. -std=c99 -Wall -Wextra -Wundef -Wshadow -Wcast-align -Wstrict-prototypes -pedantic -fPIC' all
+        make -j4 'EXTRA_CFLAGS=-fPIC -DLZ4 -I../lz4-r131 -DSNAPPY -I../snappy-1.1.3 -DHAVE_SSE42' 'EXTRA_CXXFLAGS=-fPIC -DLZ4 -I../lz4-r131 -DSNAPPY -I../snappy-1.1.3 -DHAVE_SSE42' DISABLE_JEMALLOC=1 DEBUG_LEVEL=2 static_lib
     fi
-    popd
-    cp lz4-r127/lib/liblz4.a .
-    cp ./lz4-r127/lib/lz4.h ${INSTALLDIR}/include
-    cp ./lz4-r127/lib/lz4frame.h ${INSTALLDIR}/include
-    cp ./lz4-r127/lib/lz4hc.h ${INSTALLDIR}/include
-    cp ./lz4-r127/lib/liblz4.a ${INSTALLDIR}/lib
-    # static librocksdb.a
+    rm -rf ${INSTALLDIR}
+    mkdir -p ${INSTALLDIR}/include
+    mkdir -p ${INSTALLDIR}/bin
+    mkdir -p ${INSTALLDIR}/lib
     if [ ${DEBUG} = 0 ]; then
-      make -j$NJOBS EXTRA_CFLAGS='-DHAVE_SSE42' EXTRA_CXXFLAGS='-DHAVE_SSE42' static_lib
+        make install-static INSTALL_PATH=${INSTALLDIR}
     else
-      make -j$NJOBS EXTRA_CFLAGS='-DHAVE_SSE42' EXTRA_CXXFLAGS='-DHAVE_SSE42' static_lib DEBUG_LEVEL=2
+        make install-static INSTALL_PATH=${INSTALLDIR}
     fi
-    make install-static INSTALL_PATH=${INSTALLDIR}
     popd
     #
     # Finally build Percona Server for MongoDB with SCons
     cd ${PSMDIR_ABS}
     if [ ${DEBUG} = 0 ]; then
-      scons CC=${CC} CXX=${CXX} --release --ssl --opt=on -j$NJOBS --use-sasl-client --tokubackup --wiredtiger --audit --rocksdb --PerconaFT --inmemory --hotbackup CPPPATH=${INSTALLDIR}/include LIBPATH=${INSTALLDIR}/lib ${PSM_TARGETS}
+        buildscripts/scons.py CC=${CC} CXX=${CXX} --release --ssl --opt=on -j$NJOBS --use-sasl-client --wiredtiger --audit --rocksdb --inmemory --hotbackup CPPPATH=${INSTALLDIR}/include LIBPATH=${INSTALLDIR}/lib ${PSM_TARGETS}
     else
-      scons CC=${CC} CXX=${CXX} --disable-warnings-as-errors --audit --ssl --dbg=on -j$NJOBS --use-sasl-client \
-      CPPPATH=${INSTALLDIR}/include LIBPATH=${INSTALLDIR}/lib --PerconaFT --rocksdb --wiredtiger --inmemory --tokubackup --hotbackup ${PSM_TARGETS}
+        buildscripts/scons.py CC=${CC} CXX=${CXX} --disable-warnings-as-errors --audit --ssl --dbg=on -j$NJOBS --use-sasl-client \
+        CPPPATH=${INSTALLDIR}/include LIBPATH=${INSTALLDIR}/lib --rocksdb --wiredtiger --inmemory --hotbackup ${PSM_TARGETS}
     fi
     #
     # scons install doesn't work - it installs the binaries not linked with fractal tree
@@ -707,10 +683,10 @@ build_tarball(){
     #
     mkdir -p ${PSMDIR}/bin
     if [ ${DEBUG} = 0 ]; then
-      for target in "${PSM_TARGETS[@]}"; do
+    for target in ${PSM_TARGETS[@]}; do
         cp -f $target ${PSMDIR}/bin
         strip --strip-debug ${PSMDIR}/bin/${target}
-      done
+    done
     fi
     #
     cd ${WORKDIR}
@@ -723,18 +699,24 @@ build_tarball(){
     export GOPATH=$(pwd)/
     export PATH="/usr/local/go/bin:$PATH:$GOPATH"
     export GOBINPATH="/usr/local/go/bin"
-    #[[ ${PATH} == *"/usr/local/go/bin"* && -x /usr/local/go/bin/go ]] || export PATH=/usr/local/go/bin:${PATH}
     . ./set_gopath.sh
     . ./set_tools_revision.sh
     mkdir -p bin
-    for i in bsondump mongostat mongofiles mongoexport mongoimport mongorestore mongodump mongotop mongooplog; do
-      echo "Building ${i}..."
-      go build -a -o "bin/$i" -ldflags "-X github.com/mongodb/mongo-tools/common/options.Gitspec=${PSMDB_TOOLS_COMMIT_HASH} -X github.com/mongodb/mongo-tools/common/options.VersionStr=${PSMDB_TOOLS_REVISION}" -tags "${TOOLS_TAGS}" "$i/main/$i.go"
+    for i in bsondump mongostat mongofiles mongoexport mongoimport mongorestore mongodump mongotop mongooplog mongoreplay; do
+    echo "Building ${i}..."
+    if [ ${DEBUG} = 0 ]; then
+        go build -a -x -o "bin/$i" -ldflags "-X github.com/mongodb/mongo-tools/common/options.Gitspec=${PSMDB_TOOLS_COMMIT_HASH} -X github.com/mongodb/mongo-tools/common/options.VersionStr=${PSMDB_TOOLS_REVISION}" -tags "${TOOLS_TAGS}" "$i/main/$i.go"
+    else
+        go build -a -o "bin/$i" -ldflags "-X github.com/mongodb/mongo-tools/common/options.Gitspec=${PSMDB_TOOLS_COMMIT_HASH} -X github.com/mongodb/mongo-tools/common/options.VersionStr=${PSMDB_TOOLS_REVISION}" -tags "${TOOLS_TAGS}" "$i/main/$i.go"
+    fi
     done
     # move mongo tools to PSM installation dir
     mv bin/* ${PSMDIR_ABS}/${PSMDIR}/bin
     # end build tools
-    
+    #
+    sed -i "s:TARBALL=0:TARBALL=1:" ${PSMDIR_ABS}/percona-packaging/conf/percona-server-mongodb-enable-auth.sh
+    cp ${PSMDIR_ABS}/percona-packaging/conf/percona-server-mongodb-enable-auth.sh ${PSMDIR_ABS}/${PSMDIR}/bin
+
     cd ${PSMDIR_ABS}
     tar --owner=0 --group=0 -czf ${WORKDIR}/${PSMDIR}-${OS_RELEASE}-${ARCH}${TARBALL_SUFFIX}.tar.gz ${PSMDIR}
     DIRNAME="tarball"
