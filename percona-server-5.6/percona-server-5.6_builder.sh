@@ -297,7 +297,7 @@ install_deps() {
         yum clean metadata
         yum -y install libtool rpm-build gcc-c++ gperf ncurses-devel perl readline-devel openssl-devel jemalloc 
         yum -y install time zlib-devel libaio-devel bison cmake pam-devel libeatmydata jemalloc-devel
-        yum -y install perl-Time-HiRes numacrl-devel || true
+        yum -y install perl-Time-HiRes numactl-devel || true
         yum -y install selinux-policy-devel || true
         if [ ${ARCH} = x86_64 -a ${RHEL} != 7 ]; then
            yum install -y percona-devtoolset-gcc percona-devtoolset-binutils percona-devtoolset-gcc-c++ percona-devtoolset-libstdc++-devel percona-devtoolset-valgrind-devel
