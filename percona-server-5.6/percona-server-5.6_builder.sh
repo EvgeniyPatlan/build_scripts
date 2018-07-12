@@ -293,6 +293,7 @@ install_deps() {
         RHEL=$(rpm --eval %rhel)
         ARCH=$(echo $(uname -m) | sed -e 's:i686:i386:g')
         add_percona_yum_repo
+        yum -y install http://www.percona.com/downloads/percona-release/redhat/0.1-4/percona-release-0.1-4.noarch.rpm || true
         yum -y install epel-release git redhat-lsb
         yum clean metadata
         yum -y install libtool rpm-build gcc-c++ gperf ncurses-devel perl readline-devel openssl-devel jemalloc 
@@ -302,6 +303,7 @@ install_deps() {
         if [ ${ARCH} = x86_64 -a ${RHEL} != 7 ]; then
            yum install -y percona-devtoolset-gcc percona-devtoolset-binutils percona-devtoolset-gcc-c++ percona-devtoolset-libstdc++-devel percona-devtoolset-valgrind-devel
         fi
+        yum -y install Percona-Server-shared-56  
     else
         apt-get -y install dirmngr || true
         add_percona_apt_repo
