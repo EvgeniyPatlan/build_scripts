@@ -214,7 +214,7 @@ get_sources(){
         cd ${WORKDIR}/percona-server
     fi
     #
-    cmake .
+    cmake . -DDOWNLOAD_BOOST=1 -DWITH_BOOST=${WORKDIR}/build-ps/boost
     make dist
     #
     EXPORTED_TAR=$(basename $(find . -type f -name *.tar.gz | sort | tail -n 1))
@@ -474,7 +474,7 @@ build_source_deb(){
         echo "source deb package will not be created"
         return;
     fi
-    if [ "x$OS" = "xrmp" ]
+    if [ "x$OS" = "xrpm" ]
     then
         echo "It is not possible to build source deb here"
         exit 1
@@ -523,7 +523,7 @@ build_deb(){
         echo "source deb package will not be created"
         return;
     fi
-    if [ "x$OS" = "xrmp" ]
+    if [ "x$OS" = "xrpm" ]
     then
         echo "It is not possible to build source deb here"
         exit 1
