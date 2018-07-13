@@ -328,17 +328,30 @@ install_deps() {
         add_percona_apt_repo
       	apt-get update
         apt-get -y install dirmngr || true
-        apt-get -y install lsb-release
+        apt-get -y install lsb-release wget
         export DEBIAN_FRONTEND="noninteractive"
         export DIST="$(lsb_release -sc)"
-        until sudo apt-get update; do
-            sleep 1
+
+	    until sudo apt-get update; do
+    	    sleep 1
             echo "waiting"
         done
-        apt-get -y install git libgsasl7 libsasl2-dev libsasl2-modules:amd64 libldap2-dev libcurl4-openssl-dev \
-                           bison cmake devscripts debconf debhelper fakeroot libaio-dev libmecab-dev \
-                           libncurses5-dev lsb-release perl po-debconf psmisc zlib1g-dev libreadline-dev \
-                           libpam-dev libssl-dev libnuma-dev gcc g++ libwrap0-dev libldap2-dev dh-systemd    
+        apt-get -y purge eatmydata || true
+        echo "deb http://jenkins.percona.com/apt-repo/ ${DIST} main" > percona-dev.list
+        mv -f percona-dev.list /etc/apt/sources.list.d/
+        wget -q -O - http://jenkins.percona.com/apt-repo/8507EFA5.pub | sudo apt-key add -
+        wget -q -O - http://jenkins.percona.com/apt-repo/CD2EFD2A.pub | sudo apt-key add -
+
+        apt-get update
+        apt-get -y install curl bison cmake perl libssl-dev gcc g++ libaio-dev libldap2-dev libwrap0-dev gdb unzip gawk
+        apt-get -y install lsb-release libmecab-dev libncurses5-dev libreadline-dev libpam-dev zlib1g-dev libcurl4-openssl-dev
+        apt-get -y install libldap2-dev libnuma-dev libjemalloc-dev libeatmydata libc6-dbg valgrind libjson-perl python-mysqldb
+
+        apt-get -y install libmecab2 mecab mecab-ipadic
+        apt-get -y install build-essential devscripts
+        apt-get -y install cmake autotools-dev autoconf automake build-essential devscripts debconf debhelper fakeroot 
+
+
     fi
     if [ ! -d /usr/local/percona-subunit2junitxml ]; then
         cd /usr/local
