@@ -505,7 +505,7 @@ build_source_deb(){
         echo "source deb package will not be created"
         return;
     fi
-    if [ "x$OS" = "xrmp" ]
+    if [ "x$OS" = "xrpm" ]
     then
         echo "It is not possible to build source deb here"
         exit 1
@@ -560,7 +560,7 @@ build_deb(){
         echo "source deb package will not be created"
         return;
     fi
-    if [ "x$OS" = "xrmp" ]
+    if [ "x$OS" = "xrpm" ]
     then
         echo "It is not possible to build source deb here"
         exit 1
