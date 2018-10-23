@@ -121,7 +121,7 @@ EOL
     done
     return
 }
-get_porotobuf(){
+get_protobuf(){
     MY_PATH=$(echo $PATH)
     if [ "x$OS" = "xrpm" ]; then
         source /opt/rh/devtoolset-7/enable
@@ -141,9 +141,13 @@ get_porotobuf(){
         sed -i 's;curl http://googletest.googlecode.com/files/gtest-1.5.0.tar.bz2 | tar jx;curl -L https://github.com/google/googletest/archive/release-1.5.0.tar.gz | tar zx;' autogen.sh
         sed -i 's;mv gtest-1.5.0 gtest;mv googletest-release-1.5.0 gtest;' autogen.sh
     fi
+    if [ "x$OS" = "xrpm" ]; then
+        source /opt/rh/devtoolset-7/enable
+    fi
     bash -x autogen.sh
     bash -x configure --disable-shared
     make
+    make install
     mv src/.libs src/lib
     export PATH=$MY_PATH
     return
@@ -184,16 +188,26 @@ get_v8(){
     #it should be built with gcc-4.X
     cd "${WORKDIR}"
     if [ "x$OS" = "xdeb" ]; then
-        export CC=/usr/bin/gcc-4.8
-        export CXX=/usr/bin/g++-4.8
+	if [ "x$OS_NAME" = "xstretch" ]; then
+            export CC=/usr/bin/gcc-4.9
+            export CXX=/usr/bin/g++-4.9
+	else
+            export CC=/usr/bin/gcc-4.8
+            export CXX=/usr/bin/g++-4.8
+        fi
+    else
+        if [ "x$RHEL" = "x6" ]; then
+            source /opt/percona-devtoolset/enable
+        else
+            export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games
+        fi
     fi
     git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
-    export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games
     export PATH=$(pwd)/depot_tools:$PATH
     export VPYTHON_BYPASS="manually managed python not supported by chrome operations"
-    git clone https://github.com/v8/v8.git
+    git clone https://chromium.googlesource.com/experimental/external/v8
     cd v8/
-    git checkout 3.28.71.19
+    git checkout 31c0e32e19ad3df48525fa9e7b2d1c0c07496d00
     sed -i 's|dependencies: builddeps|dependencies:|' Makefile
     cd build
     git clone https://chromium.googlesource.com/experimental/external/gyp
@@ -210,16 +224,31 @@ get_v8(){
     mv googletest gtest
     mv googlemock gmock
     cd ../
-    for file in $(grep -r fPIC * | awk -F':' '{print $1}' | sort | uniq); do 
-        sed -i 's/-fPIC//g' $file
-    done
+    if [ "x$OS" = "xrpm" ]; then
+        if [ "x$RHEL" = "x6" ]; then
+            export CXXFLAGS='-Wno-unused-function -Wno-expansion-to-defined -Wno-strict-overflow'
+        fi
+    fi
+    if [ "x$OS" = "xdeb" ]; then
+	if [ "x$OS_NAME" != 'xxenial' ]; then
+            export CXXFLAGS='-fPIC -Wno-unused-function -Wno-expansion-to-defined -Wno-strict-overflow'
+	fi
+    fi
+    #export CXXFLAGS='-fPIC -Wno-unused-function -Wno-expansion-to-defined -Wno-strict-overflow'
     make dependencies
     
-    make v8_static_library=true i18nsupport=off -j4 x64.release
+    make v8_static_library=true i18nsupport=off x64.release
+    retval=$?
+    if [ $retval != 0 ]
+    then
+        exit 1
+    fi
     cd "${WORKDIR}"
     if [ "x$OS" = "xdeb" ]; then
-	export CC=/usr/bin/gcc
-        export CXX=/usr/bin/g++
+       export CC=/usr/bin/gcc
+       export CXX=/usr/bin/g++
+    else
+       source /opt/rh/devtoolset-7/enable
     fi
 }
 
@@ -230,6 +259,9 @@ get_sources(){
     then
         echo "Sources will not be downloaded"
         return 0
+    fi
+    if [ "x$OS" = "xrpm" ]; then
+        source /opt/rh/devtoolset-7/enable
     fi
     git clone "$SHELL_REPO"
     retval=$?
@@ -257,6 +289,8 @@ get_sources(){
         cd ../../
         cmake . -DBUILD_SOURCE_PACKAGE=1 -G 'Unix Makefiles' -DCMAKE_BUILD_TYPE=RelWithDebInfo
         sed -i 's/-src//g' CPack*
+    else
+        cmake . -DBUILD_SOURCE_PACKAGE=1 -G 'Unix Makefiles' -DCMAKE_BUILD_TYPE=RelWithDebInfo
     fi
     cpack -G TGZ --config CPackSourceConfig.cmake
     mkdir $WORKDIR/source_tarball
@@ -302,7 +336,7 @@ install_deps() {
         yum -y install time zlib-devel libaio-devel bison cmake pam-devel libeatmydata jemalloc-devel
         yum -y install perl-Time-HiRes libcurl-devel openldap-devel unzip wget libcurl-devel
         yum -y install perl-Env perl-Data-Dumper perl-JSON MySQL-python perl-Digest perl-Digest-MD5 perl-Digest-Perl-MD5 || true
-        yum -y install automake m4 libtool protobuf protobuf-devel protobuf-static
+        yum -y install libicu-devel automake m4 libtool python-devel zip
         until yum -y install centos-release-scl; do
             echo "waiting"
             sleep 1
@@ -310,6 +344,7 @@ install_deps() {
         yum -y install  gcc-c++ devtoolset-7-gcc-c++ devtoolset-7-binutils
         if [ "x$RHEL" = "x6" ]; then
             yum -y install Percona-Server-shared-56
+            yum install -y percona-devtoolset-gcc percona-devtoolset-binutils python27-devel percona-devtoolset-gcc-c++ percona-devtoolset-libstdc++-devel percona-devtoolset-valgrind-devel
         fi
     else
         apt-get -y install dirmngr || true
@@ -337,7 +372,18 @@ install_deps() {
         apt-get -y install libldap2-dev libnuma-dev libjemalloc-dev libeatmydata libc6-dbg valgrind libjson-perl python-mysqldb libsasl2-dev
         apt-get -y install libmecab2 mecab mecab-ipadic libicu-devel
         apt-get -y install build-essential devscripts doxygen doxygen-gui graphviz rsync libprotobuf-dev protobuf-compiler
-        apt-get -y install cmake autotools-dev autoconf automake build-essential devscripts debconf debhelper fakeroot libicu-dev libtool gcc-4.8 g++-4.8 python python-dev zip
+        apt-get -y install cmake autotools-dev autoconf automake build-essential devscripts debconf debhelper fakeroot libicu-dev libtool
+        if [ "x$OS_NAME" = "xstretch" ]; then
+            echo "deb http://ftp.us.debian.org/debian/ jessie main contrib non-free" >> /etc/apt/sources.list
+	    apt-get update
+	    apt-get -y install gcc-4.9 g++-4.9
+	    sed -i 's;deb http://ftp.us.debian.org/debian/ jessie main contrib non-free;;' /etc/apt/sources.list
+	    apt-get update
+        else	
+            apt-get -y install gcc-4.8 g++-4.8
+	fi
+        apt-get -y install python python-dev zip
+        apt-get -y install python27-dev
     fi
     if [ ! -d /usr/local/percona-subunit2junitxml ]; then
         cd /usr/local
@@ -346,6 +392,7 @@ install_deps() {
         ln -s /usr/local/percona-subunit2junitxml/subunit2junitxml /usr/bin/subunit2junitxml
         cd ${CURPLACE}
     fi
+    get_protobuf
     return;
 }
 get_tar(){
@@ -402,7 +449,7 @@ build_srpm(){
     cd $WORKDIR
     get_tar "source_tarball"
     rm -fr rpmbuild
-    ls | grep -v mysql-shell*.tar.* | xargs rm -rf
+    ls | grep -v mysql-shell*.tar.* | grep -v protobuf | xargs rm -rf
     mkdir -vp rpmbuild/{SOURCES,SPECS,BUILD,SRPMS,RPMS}
     TARFILE=$(basename $(find . -name 'mysql-shell-*.tar.gz' | sort | tail -n1))
     NAME=$(echo ${TARFILE}| awk -F '-' '{print $1"-"$2}')
@@ -418,16 +465,15 @@ build_srpm(){
     tar vxzf ${WORKDIR}/${TARFILE} --wildcards '*/packaging/rpm/*.spec.in' --strip=3
     mv mysql-shell.spec.in mysql-shell.spec
     #
+    sed -i '/with_protobuf/,/endif/d' mysql-shell.spec
     sed -i 's/@COMMERCIAL_VER@/0/g' mysql-shell.spec
     sed -i 's/@PRODUCT_SUFFIX@//g' mysql-shell.spec
-    sed -i 's/@MYSH_NO_DASH_VERSION@/8.0.12/g' mysql-shell.spec
+    sed -i 's/@MYSH_NO_DASH_VERSION@/8.0.13/g' mysql-shell.spec
     sed -i "s:@RPM_RELEASE@:${RPM_RELEASE}:g" mysql-shell.spec
     sed -i 's/@LICENSE_TYPE@/GPLv2/g' mysql-shell.spec
     sed -i 's/@PRODUCT@/MySQL Shell/' mysql-shell.spec
-    sed -i 's/@MYSH_VERSION@/8.0.12/g' mysql-shell.spec
+    sed -i 's/@MYSH_VERSION@/8.0.13/g' mysql-shell.spec
     sed -i "s:-DHAVE_PYTHON=1 \ : -DHAVE_PYTHON=1 -DWITH_STATIC_LINKING=ON -DMYSQL_EXTRA_LIBRARIES='-lz -ldl -lssl -lcrypto -licui18n -licuuc -licudata' :" mysql-shell.spec
-    #sed -i "s:-DV8_INCLUDE_DIR=%{v8_includedir} ::g" mysql-shell.spec
-    #sed -i "s:-DV8_LIB_DIR=%{v8_libdir} ::g" mysql-shell.spec
     cd ${WORKDIR}
     #
     mv -fv ${TARFILE} ${WORKDIR}/rpmbuild/SOURCES
@@ -480,13 +526,12 @@ build_rpm(){
     mkdir -vp rpmbuild/{SOURCES,SPECS,BUILD,SRPMS,RPMS}
     #
     mv *.src.rpm rpmbuild/SRPMS
-    get_porotobuf
     get_database
     get_v8
     source /opt/rh/devtoolset-7/enable
     cd ${WORKDIR}
     #
-    rpmbuild --define "_topdir ${WORKDIR}/rpmbuild" --define "dist .el${RHEL}" --define "with_mysql_source $WORKDIR/percona-server" --define "static 1" --define "with_protobuf $WORKDIR/protobuf" --define "v8_includedir $WORKDIR/v8/include" --define "v8_libdir $WORKDIR/v8/out/x64.release/obj.target/tools/gyp" --rebuild rpmbuild/SRPMS/${SRCRPM}
+    rpmbuild --define "_topdir ${WORKDIR}/rpmbuild" --define "dist .el${RHEL}" --define "with_mysql_source $WORKDIR/percona-server" --define "static 1" --define "with_protobuf $WORKDIR/protobuf/src/" --define "v8_includedir $WORKDIR/v8/include" --define "v8_libdir $WORKDIR/v8/out/x64.release/obj.target/tools/gyp" --rebuild rpmbuild/SRPMS/${SRCRPM}
     return_code=$?
     if [ $return_code != 0 ]; then
         exit $return_code
@@ -516,13 +561,13 @@ build_source_deb(){
     NAME=$(echo ${TARFILE}| awk -F '-' '{print $1"-"$2}')
     VERSION=$(echo ${TARFILE}| awk -F '-' '{print $3}' | awk -F '.tar' '{print $1}')
     SHORTVER=$(echo ${VERSION} | awk -F '.' '{print $1"."$2}')
-    TMPREL=$(echo ${TARFILE}| awk -F '-' '{print $4}')
+    TMPREL="1.tar.gz"
     RELEASE=1
-    NEWTAR=${NAME}_${VERSION}.orig.tar.gz
+    NEWTAR=${NAME}_${VERSION}-${RELEASE}.orig.tar.gz
     mv ${TARFILE} ${NEWTAR}
     tar xzf ${NEWTAR}
     cd ${NAME}-${VERSION}
-    dch -D unstable --force-distribution -v "${VERSION}-${DEB_RELEASE}" "Update to new upstream release mysql-shell ${VERSION}-1"
+    dch -D unstable --force-distribution -v "${VERSION}-${RELEASE}-${DEB_RELEASE}" "Update to new upstream release ${VERSION}-${RELEASE}-1"
     dpkg-buildpackage -S
     cd ${WORKDIR}
     mkdir -p $WORKDIR/source_deb
@@ -557,8 +602,8 @@ build_deb(){
     export DEBIAN_VERSION="$(lsb_release -sc)"
     DSC=$(basename $(find . -name '*.dsc' | sort | tail -n 1))
     DIRNAME=$(echo ${DSC%-${DEB_RELEASE}.dsc} | sed -e 's:_:-:g')
-    VERSION=$(echo ${DSC} | sed -e 's:_:-:g' | awk -F'-' '{print $4}')
-    RELEASE=$(echo ${DSC} | sed -e 's:_:-:g' | awk -F'-' '{print $5}')
+    VERSION=$(echo ${DSC} | sed -e 's:_:-:g' | awk -F'-' '{print $3}')
+    RELEASE=$(echo ${DSC} | sed -e 's:_:-:g' | awk -F'-' '{print $4}')
     ARCH=$(uname -m)
     export EXTRAVER=${MYSQL_VERSION_EXTRA#-}
     #
@@ -567,17 +612,19 @@ build_deb(){
     echo "VERSION=${VERSION}" >> percona-server-8.0.properties
     #
     dpkg-source -x ${DSC}
-    get_porotobuf
+    #get_protobuf
     get_database
     get_v8
-    cd mysql-shell-$SHELL_BRANCH
+    cd mysql-shell-$SHELL_BRANCH-1
     sed -i 's/make -j8/make -j8\n\t/' debian/rules
     sed -i '/-DCMAKE/,/j8/d' debian/rules
     cp debian/mysql-shell.install debian/install
     sed -i 's:-rm -fr debian/tmp/usr/lib*/*.{so*,a} 2>/dev/null:-rm -fr debian/tmp/usr/lib*/*.{so*,a} 2>/dev/null\n\tmv debian/tmp/usr/local/* debian/tmp/usr/\n\trm -rf debian/tmp/usr/local:' debian/rules
     sed -i "s:VERBOSE=1:-DCMAKE_BUILD_TYPE=RelWithDebInfo -DEXTRA_INSTALL=\"\" -DEXTRA_NAME_SUFFIX=\"\" -DMYSQL_SOURCE_DIR=${WORKDIR}/percona-server -DMYSQL_BUILD_DIR=${WORKDIR}/percona-server/bld -DMYSQL_EXTRA_LIBRARIES=\"-lz -ldl -lssl -lcrypto -licui18n -licuuc -licudata \" -DWITH_PROTOBUF=${WORKDIR}/protobuf/src -DV8_INCLUDE_DIR=${WORKDIR}/v8/include -DV8_LIB_DIR=${WORKDIR}/v8/out/x64.release/obj.target/tools/gyp -DHAVE_PYTHON=1 -DWITH_STATIC_LINKING=ON . \n\t DEB_BUILD_HARDENING=1 make -j8 VERBOSE=1:" debian/rules
+    sed -i 's:} 2>/dev/null:} 2>/dev/null\n\tmv debian/tmp/usr/local/* debian/tmp/usr/\n\trm -fr debian/tmp/usr/local:' debian/rules
+    sed -i 's:, libprotobuf-dev, protobuf-compiler::' debian/control
 
-    dch -b -m -D "$DEBIAN_VERSION" --force-distribution -v "${VERSION}-${DEB_RELEASE}.${DEBIAN_VERSION}" 'Update distribution'
+    dch -b -m -D "$DEBIAN_VERSION" --force-distribution -v "${VERSION}-${RELEASE}-${DEB_RELEASE}.${DEBIAN_VERSION}" 'Update distribution'
     dpkg-buildpackage -rfakeroot -uc -us -b
     cd ${WORKDIR}
     mkdir -p $CURDIR/deb
