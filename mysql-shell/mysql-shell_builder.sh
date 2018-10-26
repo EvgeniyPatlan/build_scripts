@@ -188,10 +188,10 @@ get_v8(){
     #it should be built with gcc-4.X
     cd "${WORKDIR}"
     if [ "x$OS" = "xdeb" ]; then
-	if [ "x$OS_NAME" = "xstretch" ]; then
+        if [ "x$OS_NAME" = "xstretch" ]; then
             export CC=/usr/bin/gcc-4.9
             export CXX=/usr/bin/g++-4.9
-	else
+        else
             export CC=/usr/bin/gcc-4.8
             export CXX=/usr/bin/g++-4.8
         fi
@@ -230,9 +230,9 @@ get_v8(){
         fi
     fi
     if [ "x$OS" = "xdeb" ]; then
-	if [ "x$OS_NAME" != 'xxenial' ]; then
+        if [ "x$OS_NAME" != 'xxenial' ]; then
             export CXXFLAGS='-fPIC -Wno-unused-function -Wno-expansion-to-defined -Wno-strict-overflow'
-	fi
+        fi
     fi
     #export CXXFLAGS='-fPIC -Wno-unused-function -Wno-expansion-to-defined -Wno-strict-overflow'
     make dependencies
@@ -281,17 +281,26 @@ get_sources(){
     if [ -z "${DESTINATION:-}" ]; then
         export DESTINATION=experimental
     fi
-    echo "DESTINATION=${DESTINATION}" >> ../mysql-shell-8.0.properties
-    echo "UPLOAD=UPLOAD/${DESTINATION}/BUILDS/myswl-shell/mysql-shell-80/${SHELL_BRANCH}/${REVISION}" >> ../mysql-shell-8.0.properties
+    echo "REVISION=${REVISION}" >> ../mysql-shell.properties
+    BRANCH_NAME="${BRANCH}"
+    echo "BRANCH_NAME=${BRANCH_NAME}" >> ../mysql-shell.properties
+    export PRODUCT='mysql-shell'
+    echo "PRODUCT=mysql-shell" >> ../mysql-shell.properties
+    echo "SHELL_BRANCH=${SHELL_BRANCH}" >> ../mysql-shell.properties
+    echo "RPM_RELEASE=${RPM_RELEASE}" >> ../mysql-shell.properties
+    echo "DEB_RELEASE=${DEB_RELEASE}" >> ../mysql-shell.properties
+
+    echo "DESTINATION=${DESTINATION}" >> ../mysql-shell.properties
+    echo "UPLOAD=UPLOAD/${DESTINATION}/BUILDS/mysql-shell/mysql-shell-80/${SHELL_BRANCH}/${REVISION}" >> ../mysql-shell.properties
     if [ "x$OS" = "xdeb" ]; then
         cd packaging/debian/
         cmake .
         cd ../../
         cmake . -DBUILD_SOURCE_PACKAGE=1 -G 'Unix Makefiles' -DCMAKE_BUILD_TYPE=RelWithDebInfo
-        sed -i 's/-src//g' CPack*
     else
         cmake . -DBUILD_SOURCE_PACKAGE=1 -G 'Unix Makefiles' -DCMAKE_BUILD_TYPE=RelWithDebInfo
     fi
+    sed -i 's/-src//g' CPack*
     cpack -G TGZ --config CPackSourceConfig.cmake
     mkdir $WORKDIR/source_tarball
     mkdir $CURDIR/source_tarball
@@ -375,13 +384,13 @@ install_deps() {
         apt-get -y install cmake autotools-dev autoconf automake build-essential devscripts debconf debhelper fakeroot libicu-dev libtool
         if [ "x$OS_NAME" = "xstretch" ]; then
             echo "deb http://ftp.us.debian.org/debian/ jessie main contrib non-free" >> /etc/apt/sources.list
-	    apt-get update
-	    apt-get -y install gcc-4.9 g++-4.9
-	    sed -i 's;deb http://ftp.us.debian.org/debian/ jessie main contrib non-free;;' /etc/apt/sources.list
-	    apt-get update
-        else	
+            apt-get update
+            apt-get -y install gcc-4.9 g++-4.9
+            sed -i 's;deb http://ftp.us.debian.org/debian/ jessie main contrib non-free;;' /etc/apt/sources.list
+            apt-get update
+        else
             apt-get -y install gcc-4.8 g++-4.8
-	fi
+        fi
         apt-get -y install python python-dev zip
         apt-get -y install python27-dev
     fi
@@ -465,6 +474,8 @@ build_srpm(){
     tar vxzf ${WORKDIR}/${TARFILE} --wildcards '*/packaging/rpm/*.spec.in' --strip=3
     mv mysql-shell.spec.in mysql-shell.spec
     #
+    sed -i 's|https://cdn.mysql.com/Downloads/%{name}-@MYSH_VERSION@-src.tar.gz|%{name}-@MYSH_VERSION@.tar.gz|' mysql-shell.spec
+    sed -i 's|%{name}-@MYSH_VERSION@-src|%{name}-@MYSH_VERSION@|' mysql-shell.spec
     sed -i '/with_protobuf/,/endif/d' mysql-shell.spec
     sed -i 's/@COMMERCIAL_VER@/0/g' mysql-shell.spec
     sed -i 's/@PRODUCT_SUFFIX@//g' mysql-shell.spec
@@ -519,8 +530,8 @@ build_rpm(){
     RHEL=$(rpm --eval %rhel)
     ARCH=$(echo $(uname -m) | sed -e 's:i686:i386:g')
     #
-    echo "RHEL=${RHEL}" >> percona-server-8.0.properties
-    echo "ARCH=${ARCH}" >> percona-server-8.0.properties
+    echo "RHEL=${RHEL}" >> mysql-shell.properties
+    echo "ARCH=${ARCH}" >> mysql-shell.properties
     #
     SRCRPM=$(basename $(find . -name '*.src.rpm' | sort | tail -n1))
     mkdir -vp rpmbuild/{SOURCES,SPECS,BUILD,SRPMS,RPMS}
@@ -553,9 +564,9 @@ build_source_deb(){
         echo "It is not possible to build source deb here"
         exit 1
     fi
-    rm -rf percona-server*
+    rm -rf mysql-shell*
     get_tar "source_tarball"
-    rm -f *.dsc *.orig.tar.gz *.debian.tar.gz *.changes
+    rm -f *.dsc *.orig.tar.gz *.debian.tar.* *.changes
     #
     TARFILE=$(basename $(find . -name 'mysql-shell-*.tar.gz' | grep -v tokudb | sort | tail -n1))
     NAME=$(echo ${TARFILE}| awk -F '-' '{print $1"-"$2}')
@@ -607,9 +618,9 @@ build_deb(){
     ARCH=$(uname -m)
     export EXTRAVER=${MYSQL_VERSION_EXTRA#-}
     #
-    echo "ARCH=${ARCH}" >> percona-server-8.0.properties
-    echo "DEBIAN_VERSION=${DEBIAN_VERSION}" >> percona-server-8.0.properties
-    echo "VERSION=${VERSION}" >> percona-server-8.0.properties
+    echo "ARCH=${ARCH}" >> mysql-shell.properties
+    echo "DEBIAN_VERSION=${DEBIAN_VERSION}" >> mysql-shell.properties
+    echo "VERSION=${VERSION}" >> mysql-shell.properties
     #
     dpkg-source -x ${DSC}
     #get_protobuf
@@ -640,7 +651,7 @@ build_tarball(){
     fi
     get_tar "source_tarball"
     cd $WORKDIR
-    TARFILE=$(basename $(find . -name 'percona-server-*.tar.gz' | sort | tail -n1))
+    TARFILE=$(basename $(find . -name 'mysql-shell*.tar.gz' | sort | tail -n1))
     if [ -f /etc/debian_version ]; then
         export OS_RELEASE="$(lsb_release -sc)"
     fi
@@ -652,55 +663,45 @@ build_tarball(){
     fi
     #
     ARCH=$(uname -m 2>/dev/null||true)
-    TARFILE=$(basename $(find . -name 'percona-server-*.tar.gz' | sort | grep -v "tools" | tail -n1))
+    TARFILE=$(basename $(find . -name 'mysql-shell*.tar.gz' | sort | grep -v "tools" | tail -n1))
     NAME=$(echo ${TARFILE}| awk -F '-' '{print $1"-"$2}')
     VERSION=$(echo ${TARFILE}| awk -F '-' '{print $3}')
+    VER=$(echo ${TARFILE}| awk -F '-' '{print $3}' | awk -F'.' '{print $1}')
     #
     SHORTVER=$(echo ${VERSION} | awk -F '.' '{print $1"."$2}')
     TMPREL=$(echo ${TARFILE}| awk -F '-' '{print $4}')
     RELEASE=${TMPREL%.tar.gz}
     #
-    export CFLAGS=$(rpm --eval %{optflags} | sed -e "s|march=i386|march=i686|g")
-    export CXXFLAGS="${CFLAGS}"
-    if [ "${YASSL}" = 0 ]; then
-        if [ -f /etc/redhat-release ]; then
-            SSL_VER_TMP=$(yum list installed|grep -i openssl|head -n1|awk '{print $2}'|awk -F "-" '{print $1}'|sed 's/\.//g'|sed 's/[a-z]$//')
-            export SSL_VER=".ssl${SSL_VER_TMP}"
-        else
-            SSL_VER_TMP=$(dpkg -l|grep -i libssl|grep -v "libssl\-"|head -n1|awk '{print $2}'|awk -F ":" '{print $1}'|sed 's/libssl/ssl/g'|sed 's/\.//g')
-            export SSL_VER=".${SSL_VER_TMP}"
-        fi
-    fi
-    build_mecab_lib
-    build_mecab_dict
-    MECAB_INSTALL_DIR="${WORKDIR}/mecab-install"
-    rm -fr TARGET && mkdir TARGET
-    rm -rf jemalloc
-    git clone https://github.com/jemalloc/jemalloc
-    (
-    cd jemalloc
-    git checkout 3.6.0
-    bash autogen.sh
-    )
-    #
+    get_database
+    get_v8
+    cd ${WORKDIR}
     rm -fr ${TARFILE%.tar.gz}
     tar xzf ${TARFILE}
     cd ${TARFILE%.tar.gz}
-    if [ "${YASSL}" = 1 ]; then
-        DIRNAME="tarball_yassl"
-        CMAKE_OPTS="-DWITH_ROCKSDB=1" bash -xe ./build-ps/build-binary.sh --with-jemalloc=../jemalloc/ --with-yassl --with-mecab="${MECAB_INSTALL_DIR}/usr" ../TARGET
-    else
-        CMAKE_OPTS="-DWITH_ROCKSDB=1" bash -xe ./build-ps/build-binary.sh --with-mecab="${MECAB_INSTALL_DIR}/usr" --with-jemalloc=../jemalloc/ ../TARGET
-        DIRNAME="tarball"
-    fi
+    DIRNAME="tarball"
+    mkdir bld
+    cd bld
+    cmake .. -DMYSQL_SOURCE_DIR=${WORKDIR}/percona-server \
+            -DMYSQL_BUILD_DIR=${WORKDIR}/percona-server/bld \
+            -DMYSQL_EXTRA_LIBRARIES="-lz -ldl -lssl -lcrypto -licui18n -licuuc -licudata " \
+            -DWITH_PROTOBUF=${WORKDIR}/protobuf/src \
+            -DV8_INCLUDE_DIR=${WORKDIR}/v8/include \
+            -DV8_LIB_DIR=${WORKDIR}/v8/out/x64.release/obj.target/tools/gyp \
+            -DHAVE_PYTHON=1 \
+            -DWITH_STATIC_LINKING=ON
+    make -j4
+    mkdir ${NAME}-${VER}-${OS_NAME}
+    cp -r bin ${NAME}-${VER}-${OS_NAME}/
+    cp -r share ${NAME}-${VER}-${OS_NAME}/
+    tar -zcvf ${NAME}-${VER}-${OS_NAME}.tar.gz ${NAME}-${VER}-${OS_NAME}
     mkdir -p ${WORKDIR}/${DIRNAME}
     mkdir -p ${CURDIR}/${DIRNAME}
-    cp ../TARGET/*.tar.gz ${WORKDIR}/${DIRNAME}
-    cp ../TARGET/*.tar.gz ${CURDIR}/${DIRNAME}
+    cp *.tar.gz ${WORKDIR}/${DIRNAME}
+    cp *.tar.gz ${CURDIR}/${DIRNAME}
 }
 #main
 CURDIR=$(pwd)
-VERSION_FILE=$CURDIR/percona-server-8.0.properties
+VERSION_FILE=$CURDIR/mysql-shell.properties
 args=
 WORKDIR=
 SRPM=0
