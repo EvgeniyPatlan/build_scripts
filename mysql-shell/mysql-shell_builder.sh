@@ -114,11 +114,7 @@ deb-src http://jenkins.percona.com/apt-repo/ @@DIST@@ main
 EOL
         sed -i "s:@@DIST@@:$OS_NAME:g" /etc/apt/sources.list.d/percona-dev.list
     fi
-    add_key="apt-key adv --keyserver ha.pool.sks-keyservers.net --recv-keys 9334A25F8507EFA5"
-    until ${add_key}; do
-        sleep 1
-        echo "waiting"
-    done
+    wget -qO - http://jenkins.percona.com/apt-repo/8507EFA5.pub | apt-key add -
     return
 }
 get_protobuf(){
@@ -236,7 +232,7 @@ get_v8(){
     fi
     #export CXXFLAGS='-fPIC -Wno-unused-function -Wno-expansion-to-defined -Wno-strict-overflow'
     make dependencies
-    
+
     make v8_static_library=true i18nsupport=off x64.release
     retval=$?
     if [ $retval != 0 ]
@@ -245,10 +241,10 @@ get_v8(){
     fi
     cd "${WORKDIR}"
     if [ "x$OS" = "xdeb" ]; then
-       export CC=/usr/bin/gcc
-       export CXX=/usr/bin/g++
+        export CC=/usr/bin/gcc
+        export CXX=/usr/bin/g++
     else
-       source /opt/rh/devtoolset-7/enable
+        source /opt/rh/devtoolset-7/enable
     fi
 }
 
@@ -304,8 +300,9 @@ get_sources(){
     cpack -G TGZ --config CPackSourceConfig.cmake
     mkdir $WORKDIR/source_tarball
     mkdir $CURDIR/source_tarball
-    cp mysql-shell*.tar.gz $WORKDIR/source_tarball
-    cp mysql-shell*.tar.gz $CURDIR/source_tarball
+    TAR_NAME=$(ls mysql-shell*.tar.gz)
+    cp mysql-shell*.tar.gz $WORKDIR/source_tarball/percona-${TAR_NAME}
+    cp mysql-shell*.tar.gz $CURDIR/source_tarball/percona-${TAR_NAME}
     cd $CURDIR
     rm -rf mysql-shell
     return
@@ -406,10 +403,10 @@ install_deps() {
 }
 get_tar(){
     TARBALL=$1
-    TARFILE=$(basename $(find $WORKDIR/$TARBALL -name 'mysql-shell*.tar.gz' | sort | tail -n1))
+    TARFILE=$(basename $(find $WORKDIR/$TARBALL -name 'percona-mysql-shell*.tar.gz' | sort | tail -n1))
     if [ -z $TARFILE ]
     then
-        TARFILE=$(basename $(find $CURDIR/$TARBALL -name 'mysql-shell*.tar.gz' | sort | tail -n1))
+        TARFILE=$(basename $(find $CURDIR/$TARBALL -name 'percona-mysql-shell*.tar.gz' | sort | tail -n1))
         if [ -z $TARFILE ]
         then
             echo "There is no $TARBALL for build"
@@ -425,10 +422,10 @@ get_tar(){
 get_deb_sources(){
     param=$1
     echo $param
-    FILE=$(basename $(find $WORKDIR/source_deb -name "mysql-shell*.$param" | sort | tail -n1))
+    FILE=$(basename $(find $WORKDIR/source_deb -name "percona-mysql-shell*.$param" | sort | tail -n1))
     if [ -z $FILE ]
     then
-        FILE=$(basename $(find $CURDIR/source_deb -name "mysql-shell*.$param" | sort | tail -n1))
+        FILE=$(basename $(find $CURDIR/source_deb -name "percona-mysql-shell*.$param" | sort | tail -n1))
         if [ -z $FILE ]
         then
             echo "There is no sources for build"
@@ -458,9 +455,9 @@ build_srpm(){
     cd $WORKDIR
     get_tar "source_tarball"
     rm -fr rpmbuild
-    ls | grep -v mysql-shell*.tar.* | grep -v protobuf | xargs rm -rf
+    ls | grep -v percona-mysql-shell*.tar.* | grep -v protobuf | xargs rm -rf
     mkdir -vp rpmbuild/{SOURCES,SPECS,BUILD,SRPMS,RPMS}
-    TARFILE=$(basename $(find . -name 'mysql-shell-*.tar.gz' | sort | tail -n1))
+    TARFILE=$(basename $(find . -name 'percona-mysql-shell-*.tar.gz' | sort | tail -n1))
     NAME=$(echo ${TARFILE}| awk -F '-' '{print $1"-"$2}')
     VERSION=$(echo ${TARFILE}| awk -F '-' '{print $3}')
     #
@@ -474,8 +471,10 @@ build_srpm(){
     tar vxzf ${WORKDIR}/${TARFILE} --wildcards '*/packaging/rpm/*.spec.in' --strip=3
     mv mysql-shell.spec.in mysql-shell.spec
     #
+    sed -i 's|mysql-shell@PRODUCT_SUFFIX@|percona-mysql-shell@PRODUCT_SUFFIX@|' mysql-shell.spec
     sed -i 's|https://cdn.mysql.com/Downloads/%{name}-@MYSH_VERSION@-src.tar.gz|%{name}-@MYSH_VERSION@.tar.gz|' mysql-shell.spec
     sed -i 's|%{name}-@MYSH_VERSION@-src|%{name}-@MYSH_VERSION@|' mysql-shell.spec
+    sed -i 's|%setup -q -n %{name}-|%setup -q -n mysql-shell-|' mysql-shell.spec
     sed -i '/with_protobuf/,/endif/d' mysql-shell.spec
     sed -i 's/@COMMERCIAL_VER@/0/g' mysql-shell.spec
     sed -i 's/@PRODUCT_SUFFIX@//g' mysql-shell.spec
@@ -485,11 +484,12 @@ build_srpm(){
     sed -i 's/@PRODUCT@/MySQL Shell/' mysql-shell.spec
     sed -i 's/@MYSH_VERSION@/8.0.13/g' mysql-shell.spec
     sed -i "s:-DHAVE_PYTHON=1 \ : -DHAVE_PYTHON=1 -DWITH_STATIC_LINKING=ON -DMYSQL_EXTRA_LIBRARIES='-lz -ldl -lssl -lcrypto -licui18n -licuuc -licudata' :" mysql-shell.spec
+    mv mysql-shell.spec percona-mysql-shell.spec
     cd ${WORKDIR}
     #
     mv -fv ${TARFILE} ${WORKDIR}/rpmbuild/SOURCES
     #
-    rpmbuild -bs --define "_topdir ${WORKDIR}/rpmbuild" --define "dist .generic" rpmbuild/SPECS/mysql-shell.spec
+    rpmbuild -bs --define "_topdir ${WORKDIR}/rpmbuild" --define "dist .generic" rpmbuild/SPECS/percona-mysql-shell.spec
     #
     mkdir -p ${WORKDIR}/srpm
     mkdir -p ${CURDIR}/srpm
@@ -509,10 +509,10 @@ build_rpm(){
     then
         echo "It is not possible to build rpm here"
     fi
-    SRC_RPM=$(basename $(find $WORKDIR/srpm -name 'mysql-shell-*.src.rpm' | sort | tail -n1))
+    SRC_RPM=$(basename $(find $WORKDIR/srpm -name 'percona-mysql-shell-*.src.rpm' | sort | tail -n1))
     if [ -z $SRC_RPM ]
     then
-        SRC_RPM=$(basename $(find $CURDIR/srpm -name 'mysql-shell-*.src.rpm' | sort | tail -n1))
+        SRC_RPM=$(basename $(find $CURDIR/srpm -name 'percona-mysql-shell-*.src.rpm' | sort | tail -n1))
         if [ -z $SRC_RPM ]
         then
             echo "There is no src rpm for build"
@@ -568,16 +568,19 @@ build_source_deb(){
     get_tar "source_tarball"
     rm -f *.dsc *.orig.tar.gz *.debian.tar.* *.changes
     #
-    TARFILE=$(basename $(find . -name 'mysql-shell-*.tar.gz' | grep -v tokudb | sort | tail -n1))
-    NAME=$(echo ${TARFILE}| awk -F '-' '{print $1"-"$2}')
-    VERSION=$(echo ${TARFILE}| awk -F '-' '{print $3}' | awk -F '.tar' '{print $1}')
+    TARFILE=$(basename $(find . -name 'percona-mysql-shell-*.tar.gz' | grep -v tokudb | sort | tail -n1))
+    NAME=$(echo ${TARFILE}| awk -F '-' '{print $1"-"$2"-"$3}')
+    VERSION=$(echo ${TARFILE}| awk -F '-' '{print $4}' | awk -F '.tar' '{print $1}')
     SHORTVER=$(echo ${VERSION} | awk -F '.' '{print $1"."$2}')
     TMPREL="1.tar.gz"
     RELEASE=1
     NEWTAR=${NAME}_${VERSION}-${RELEASE}.orig.tar.gz
     mv ${TARFILE} ${NEWTAR}
     tar xzf ${NEWTAR}
-    cd ${NAME}-${VERSION}
+    cd mysql-shell-${VERSION}
+    sed -i 's|Source: mysql-shell|Source: percona-mysql-shell|' debian/control
+    sed -i 's|Package: mysql-shell|Package: percona-mysql-shell|' debian/control
+    sed -i 's|mysql-shell|percona-mysql-shell|' debian/changelog
     dch -D unstable --force-distribution -v "${VERSION}-${RELEASE}-${DEB_RELEASE}" "Update to new upstream release ${VERSION}-${RELEASE}-1"
     dpkg-buildpackage -S
     cd ${WORKDIR}
@@ -606,6 +609,7 @@ build_deb(){
     fi
     for file in 'dsc' 'orig.tar.gz' 'changes' 'debian.tar*'
     do
+	ls $WORKDIR */*
         get_deb_sources $file
     done
     cd $WORKDIR
@@ -613,8 +617,8 @@ build_deb(){
     export DEBIAN_VERSION="$(lsb_release -sc)"
     DSC=$(basename $(find . -name '*.dsc' | sort | tail -n 1))
     DIRNAME=$(echo ${DSC%-${DEB_RELEASE}.dsc} | sed -e 's:_:-:g')
-    VERSION=$(echo ${DSC} | sed -e 's:_:-:g' | awk -F'-' '{print $3}')
-    RELEASE=$(echo ${DSC} | sed -e 's:_:-:g' | awk -F'-' '{print $4}')
+    VERSION=$(echo ${DSC} | sed -e 's:_:-:g' | awk -F'-' '{print $4}')
+    RELEASE=$(echo ${DSC} | sed -e 's:_:-:g' | awk -F'-' '{print $5}')
     ARCH=$(uname -m)
     export EXTRAVER=${MYSQL_VERSION_EXTRA#-}
     #
@@ -626,7 +630,7 @@ build_deb(){
     #get_protobuf
     get_database
     get_v8
-    cd mysql-shell-$SHELL_BRANCH-1
+    cd percona-mysql-shell-$SHELL_BRANCH-1
     sed -i 's/make -j8/make -j8\n\t/' debian/rules
     sed -i '/-DCMAKE/,/j8/d' debian/rules
     cp debian/mysql-shell.install debian/install
@@ -651,7 +655,7 @@ build_tarball(){
     fi
     get_tar "source_tarball"
     cd $WORKDIR
-    TARFILE=$(basename $(find . -name 'mysql-shell*.tar.gz' | sort | tail -n1))
+    TARFILE=$(basename $(find . -name 'percona-mysql-shell*.tar.gz' | sort | tail -n1))
     if [ -f /etc/debian_version ]; then
         export OS_RELEASE="$(lsb_release -sc)"
     fi
@@ -663,13 +667,13 @@ build_tarball(){
     fi
     #
     ARCH=$(uname -m 2>/dev/null||true)
-    TARFILE=$(basename $(find . -name 'mysql-shell*.tar.gz' | sort | grep -v "tools" | tail -n1))
-    NAME=$(echo ${TARFILE}| awk -F '-' '{print $1"-"$2}')
-    VERSION=$(echo ${TARFILE}| awk -F '-' '{print $3}')
-    VER=$(echo ${TARFILE}| awk -F '-' '{print $3}' | awk -F'.' '{print $1}')
+    TARFILE=$(basename $(find . -name 'percona-mysql-shell*.tar.gz' | sort | grep -v "tools" | tail -n1))
+    NAME=$(echo ${TARFILE}| awk -F '-' '{print $1"-"$2"-"$3}')
+    VERSION=$(echo ${TARFILE}| awk -F '-' '{print $4}' | awk -F '.tar' '{print $1}')
+    VER=$(echo ${TARFILE}| awk -F '-' '{print $4}' | awk -F'.' '{print $1}')
     #
     SHORTVER=$(echo ${VERSION} | awk -F '.' '{print $1"."$2}')
-    TMPREL=$(echo ${TARFILE}| awk -F '-' '{print $4}')
+    TMPREL=$(echo ${TARFILE}| awk -F '-' '{print $5}')
     RELEASE=${TMPREL%.tar.gz}
     #
     get_database
@@ -677,7 +681,7 @@ build_tarball(){
     cd ${WORKDIR}
     rm -fr ${TARFILE%.tar.gz}
     tar xzf ${TARFILE}
-    cd ${TARFILE%.tar.gz}
+    cd mysql-shell-${VERSION}
     DIRNAME="tarball"
     mkdir bld
     cd bld
@@ -690,10 +694,10 @@ build_tarball(){
             -DHAVE_PYTHON=1 \
             -DWITH_STATIC_LINKING=ON
     make -j4
-    mkdir ${NAME}-${VER}-${OS_NAME}
-    cp -r bin ${NAME}-${VER}-${OS_NAME}/
-    cp -r share ${NAME}-${VER}-${OS_NAME}/
-    tar -zcvf ${NAME}-${VER}-${OS_NAME}.tar.gz ${NAME}-${VER}-${OS_NAME}
+    mkdir ${NAME}-${VERSION}-${OS_NAME}
+    cp -r bin ${NAME}-${VERSION}-${OS_NAME}/
+    cp -r share ${NAME}-${VERSION}-${OS_NAME}/
+    tar -zcvf ${NAME}-${VERSION}-${OS_NAME}.tar.gz ${NAME}-${VERSION}-${OS_NAME}
     mkdir -p ${WORKDIR}/${DIRNAME}
     mkdir -p ${CURDIR}/${DIRNAME}
     cp *.tar.gz ${WORKDIR}/${DIRNAME}
