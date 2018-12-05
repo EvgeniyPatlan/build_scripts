@@ -343,7 +343,7 @@ install_deps() {
         yum -y install time zlib-devel libaio-devel bison cmake pam-devel libeatmydata jemalloc-devel
         yum -y install perl-Time-HiRes libcurl-devel openldap-devel unzip wget libcurl-devel
         yum -y install perl-Env perl-Data-Dumper perl-JSON MySQL-python perl-Digest perl-Digest-MD5 perl-Digest-Perl-MD5 || true
-        yum -y install libicu-devel automake m4 libtool python-devel zip
+        yum -y install libicu-devel automake m4 libtool python-devel zip rpmlint
         until yum -y install centos-release-scl; do
             echo "waiting"
             sleep 1
