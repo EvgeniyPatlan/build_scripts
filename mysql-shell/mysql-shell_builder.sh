@@ -287,7 +287,8 @@ get_sources(){
     echo "DEB_RELEASE=${DEB_RELEASE}" >> ../mysql-shell.properties
 
     echo "DESTINATION=${DESTINATION}" >> ../mysql-shell.properties
-    echo "UPLOAD=UPLOAD/${DESTINATION}/BUILDS/mysql-shell/mysql-shell-80/${SHELL_BRANCH}/${REVISION}" >> ../mysql-shell.properties
+    TIMESTAMP=$(date "+%Y%m%d-%H%M%S")
+    echo "UPLOAD=UPLOAD/${DESTINATION}/BUILDS/mysql-shell/mysql-shell-80/${SHELL_BRANCH}/${TIMESTAMP}" >> ../mysql-shell.properties
     if [ "x$OS" = "xdeb" ]; then
         cd packaging/debian/
         cmake .
