@@ -116,12 +116,7 @@ deb-src http://jenkins.percona.com/apt-repo/ @@DIST@@ main
 EOL
     sed -i "s:@@DIST@@:$OS_NAME:g" /etc/apt/sources.list.d/percona-dev.list
   fi
-  
-  add_key="apt-key adv --keyserver ha.pool.sks-keyservers.net --recv-keys 9334A25F8507EFA5"
-  until ${add_key}; do
-    sleep 1
-    echo "waiting"
-  done
+  wget -qO - http://jenkins.percona.com/apt-repo/8507EFA5.pub | apt-key add -
   return
 }
 
@@ -171,8 +166,9 @@ get_sources(){
         export DESTINATION=experimental
     fi
     #
+    TIMESTAMP=$(date "+%Y%m%d-%H%M%S")
     echo "DESTINATION=${DESTINATION}" >> ../percona-server-5.6.properties
-    echo 'UPLOAD=UPLOAD/${DESTINATION}/BUILDS/${PRODUCT}/${PRODUCT_FULL}/${BRANCH_NAME}/${REVISION}' >> ../percona-server-5.6.properties
+    echo "UPLOAD=UPLOAD/${DESTINATION}/BUILDS/${PRODUCT}/${PRODUCT_FULL}/${BRANCH_NAME}/${REVISION}/${TIMESTAMP}" >> ../percona-server-5.6.properties
     #
     # initialize git submodules
     rm -rf storage/tokudb/PerconaFT
