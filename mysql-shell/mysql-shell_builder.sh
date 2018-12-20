@@ -351,7 +351,7 @@ install_deps() {
         yum -y install  gcc-c++ devtoolset-7-gcc-c++ devtoolset-7-binutils
         if [ "x$RHEL" = "x6" ]; then
             yum -y install Percona-Server-shared-56
-            yum install -y percona-devtoolset-gcc percona-devtoolset-binutils python27-devel percona-devtoolset-gcc-c++ percona-devtoolset-libstdc++-devel percona-devtoolset-valgrind-devel
+            yum install -y percona-devtoolset-gcc percona-devtoolset-binutils python-devel percona-devtoolset-gcc-c++ percona-devtoolset-libstdc++-devel percona-devtoolset-valgrind-devel
         fi
     else
         apt-get -y install dirmngr || true
