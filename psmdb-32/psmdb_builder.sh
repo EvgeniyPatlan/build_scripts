@@ -10,12 +10,12 @@ Usage: $0 [OPTIONS]
     The following options may be given :
         --builddir=DIR      Absolute path to the dir where all actions will be performed
         --get_sources       Source will be downloaded from github
-        --build_src_rpm     If it is 1 src rpm will be built
-        --build_source_deb  If it is 1 source deb package will be built
-        --build_rpm         If it is 1 rpm will be built
-        --build_deb         If it is 1 deb will be built
-        --build_tarball     If it is 1 tarball will be built
-        --install_deps      Install build dependencies(root previlages are required)
+        --build_src_rpm     If it is set - src rpm will be built
+        --build_source_deb  If it is set - source deb package will be built
+        --build_rpm         If it is set - rpm will be built
+        --build_deb         If it is set - deb will be built
+        --build_tarball     If it is set - tarball will be built
+        --install_deps      Install build dependencies(root privilages are required)
         --branch            Branch for build
         --repo              Repo for build
         --psm_ver           PSM_VER(mandatory)
@@ -44,7 +44,6 @@ parse_arguments() {
     for arg do
         val=$(echo "$arg" | sed -e 's;^--[^=]*=;;')
         case "$arg" in
-            # these get passed explicitly to mysqld
             --builddir=*) WORKDIR="$val" ;;
             --build_src_rpm=*) SRPM="$val" ;;
             --build_source_deb=*) SDEB="$val" ;;
@@ -57,6 +56,7 @@ parse_arguments() {
             --install_deps=*) INSTALL="$val" ;;
             --psm_ver=*) PSM_VER="$val" ;;
             --psm_release=*) PSM_RELEASE="$val" ;;
+            --mongo_tools_tag=*) MONGO_TOOLS_TAG="$val" ;;
             --debug=*) DEBUG="$val" ;;
             --help) usage ;;      
             *)
@@ -114,12 +114,7 @@ deb-src http://jenkins.percona.com/apt-repo/ @@DIST@@ main
 EOL
     sed -i "s:@@DIST@@:$OS_NAME:g" /etc/apt/sources.list.d/percona-dev.list
   fi
-  
-  add_key="apt-key adv --keyserver ha.pool.sks-keyservers.net --recv-keys 9334A25F8507EFA5"
-  until ${add_key}; do
-    sleep 1
-    echo "waiting"
-  done
+  wget -qO - http://jenkins.percona.com/apt-repo/8507EFA5.pub | apt-key add -
   return
 }
 
@@ -238,7 +233,7 @@ install_deps() {
     
       yum -y install gcc-c++ gperf ncurses-devel perl readline-devel openssl-devel jemalloc
       yum -y install time zlib-devel libaio-devel bison cmake pam-devel libeatmydata jemalloc-devel
-      yum -y install perl-Time-HiRes perl-Env perl-Data-Dumper perl-JSON MySQL-python || true
+      yum -y install perl-Time-HiRes perl-Env perl-Data-Dumper perl-JSON MySQL-python lz4-devel || true
 
     else
       add_percona_apt_repo
@@ -412,7 +407,7 @@ build_source_deb(){
         echo "source deb package will not be created"
         return;
     fi
-    if [ "x$OS" = "xrpm" ]
+    if [ "x$OS" = "xrmp" ]
     then
         echo "It is not possible to build source deb here"
         exit 1
@@ -488,7 +483,7 @@ build_deb(){
         echo "source deb package will not be created"
         return;
     fi
-    if [ "x$OS" = "xrpm" ]
+    if [ "x$OS" = "xrmp" ]
     then
         echo "It is not possible to build source deb here"
         exit 1
@@ -745,14 +740,14 @@ REVISION=0
 BRANCH="v3.2"
 REPO="https://github.com/percona/percona-server-mongodb.git"
 PSM_VER="3.2.19"
-VERSION=${PSM_VER}
 PSM_RELEASE="3.10"
-RELEASE=${PSM_RELEASE}
 MONGO_TOOLS_TAG="r3.2.19"
 PRODUCT=percona-server-mongodb
 DEBUG=0
-PRODUCT_FULL=${PRODUCT}-${PSM_VER}-${PSM_RELEASE}
 parse_arguments PICK-ARGS-FROM-ARGV "$@"
+VERSION=${PSM_VER}
+RELEASE=${PSM_RELEASE}
+PRODUCT_FULL=${PRODUCT}-${PSM_VER}-${PSM_RELEASE}
 PSM_BRANCH=${BRANCH}
 if [ ${DEBUG} = 1 ]; then
   TARBALL=1
