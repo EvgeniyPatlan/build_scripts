@@ -93,34 +93,18 @@ check_workdir(){
 add_percona_yum_repo(){
     if [ ! -f /etc/yum.repos.d/percona-dev.repo ]
     then
-        cat >/etc/yum.repos.d/percona-dev.repo <<EOL
-[percona-dev-$basearch]
-name=Percona internal YUM repository for build slaves \$releasever - \$basearch
-baseurl=http://jenkins.percona.com/yum-repo/\$releasever/RPMS/\$basearch
-gpgkey=http://jenkins.percona.com/yum-repo/PERCONA-PACKAGING-KEY
-gpgcheck=0
-enabled=1
-
-[percona-dev-noarch]
-name=Percona internal YUM repository for build slaves \$releasever - noarch
-baseurl=http://jenkins.percona.com/yum-repo/\$releasever/RPMS/noarch
-gpgkey=http://jenkins.percona.com/yum-repo/PERCONA-PACKAGING-KEY
-gpgcheck=0
-enabled=1
-EOL
+        curl -o /etc/yum.repos.d/ https://jenkins.percona.com/yum-repo/percona-dev.repo
     fi
     return
 }
 
 add_percona_apt_repo(){
   if [ ! -f /etc/apt/sources.list.d/percona-dev.list ]; then
-    cat >/etc/apt/sources.list.d/percona-dev.list <<EOL
-deb http://jenkins.percona.com/apt-repo/ @@DIST@@ main
-deb-src http://jenkins.percona.com/apt-repo/ @@DIST@@ main
-EOL
+    curl -o /etc/apt/sources.list.d/ https://jenkins.percona.com/apt-repo/percona-dev.list.template
+    mv /etc/apt/sources.list.d/percona-dev.list.template /etc/apt/sources.list.d/percona-dev.list
     sed -i "s:@@DIST@@:$OS_NAME:g" /etc/apt/sources.list.d/percona-dev.list
   fi
-  
+ 
   wget -q -O - http://jenkins.percona.com/apt-repo/8507EFA5.pub | sudo apt-key add -
   wget -q -O - http://jenkins.percona.com/apt-repo/CD2EFD2A.pub | sudo apt-key add -
   return
@@ -298,7 +282,7 @@ install_deps() {
         echo "Dependencies will not be installed"
         return;
     fi
-    if [ ! $( id -u ) -eq 0 ]
+    if [ $( id -u ) -ne 0 ]
     then
         echo "It is not possible to instal dependencies. Please run as root"
         exit 1
@@ -309,7 +293,8 @@ install_deps() {
         RHEL=$(rpm --eval %rhel)
         ARCH=$(echo $(uname -m) | sed -e 's:i686:i386:g')
         add_percona_yum_repo
-        yum -y install http://www.percona.com/downloads/percona-release/redhat/0.1-4/percona-release-0.1-4.noarch.rpm || true
+        yum -y install https://repo.percona.com/yum/percona-release-latest.noarch.rpm || true
+        percona-release enable origin release
         yum -y install epel-release
         yum -y install git numactl-devel rpm-build gcc-c++ gperf ncurses-devel perl readline-devel openssl-devel jemalloc 
         yum -y install time zlib-devel libaio-devel bison cmake pam-devel libeatmydata jemalloc-devel
@@ -329,17 +314,11 @@ install_deps() {
         apt-get -y install lsb-release wget
         export DEBIAN_FRONTEND="noninteractive"
         export DIST="$(lsb_release -sc)"
-
 	    until sudo apt-get update; do
     	    sleep 1
             echo "waiting"
         done
         apt-get -y purge eatmydata || true
-        echo "deb http://jenkins.percona.com/apt-repo/ ${DIST} main" > percona-dev.list
-        mv -f percona-dev.list /etc/apt/sources.list.d/
-        wget -q -O - http://jenkins.percona.com/apt-repo/8507EFA5.pub | sudo apt-key add -
-        wget -q -O - http://jenkins.percona.com/apt-repo/CD2EFD2A.pub | sudo apt-key add -
-
         apt-get update
         apt-get -y install psmisc
         apt-get -y install libsasl2-modules:amd64 || apt-get -y install libsasl2-modules
@@ -351,15 +330,6 @@ install_deps() {
         apt-get -y install libmecab2 mecab mecab-ipadic
         apt-get -y install build-essential devscripts
         apt-get -y install cmake autotools-dev autoconf automake build-essential devscripts debconf debhelper fakeroot 
-
-
-    fi
-    if [ ! -d /usr/local/percona-subunit2junitxml ]; then
-        cd /usr/local
-        git clone https://github.com/percona/percona-subunit2junitxml.git
-        rm -rf /usr/bin/subunit2junitxml
-        ln -s /usr/local/percona-subunit2junitxml/subunit2junitxml /usr/bin/subunit2junitxml
-        cd ${CURPLACE}
     fi
     return;
 }
@@ -823,4 +793,3 @@ build_srpm
 build_source_deb
 build_rpm
 build_deb
-
