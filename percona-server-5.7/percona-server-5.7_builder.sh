@@ -328,7 +328,7 @@ install_deps() {
         apt-get -y install libldap2-dev libnuma-dev libjemalloc-dev libeatmydata libc6-dbg valgrind libjson-perl python-mysqldb libsasl2-dev
 
         apt-get -y install libmecab2 mecab mecab-ipadic
-        apt-get -y install build-essential devscripts
+        apt-get -y install build-essential devscripts libnuma-dev
         apt-get -y install cmake autotools-dev autoconf automake build-essential devscripts debconf debhelper fakeroot 
     fi
     return;
