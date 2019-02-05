@@ -321,7 +321,7 @@ install_deps() {
         apt-get -y purge eatmydata || true
         apt-get update
         apt-get -y install psmisc
-        apt-get -y install libsasl2-modules:amd64 || apt-get -y install libsasl2-modules
+        apt-get -y install libsasl2-dev libsasl2-modules:amd64 libsasl2-modules-ldap || apt-get -y install libsasl2-modules libsasl2-modules-ldap libsasl2-dev
         apt-get -y install dh-systemd || true
         apt-get -y install curl bison cmake perl libssl-dev gcc g++ libaio-dev libldap2-dev libwrap0-dev gdb unzip gawk
         apt-get -y install lsb-release libmecab-dev libncurses5-dev libreadline-dev libpam-dev zlib1g-dev libcurl4-openssl-dev
