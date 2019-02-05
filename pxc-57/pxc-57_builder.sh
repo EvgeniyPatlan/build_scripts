@@ -1,14 +1,14 @@
-#!/bin/sh
-
-shell_quote_string() {
-  echo "$1" | sed -e 's,\([^a-zA-Z0-9/_.=-]\),\\\1,g'
-}
-
-usage () {
-    cat <<EOF
-Usage: $0 [OPTIONS]
-    The following options may be given :
-        --builddir=DIR      Absolute path to the dir where all actions will be performed
+#!/bin/sh                                                                                                      
+                                                                                                               
+shell_quote_string() {                                                                                         
+  echo "$1" | sed -e 's,\([^a-zA-Z0-9/_.=-]\),\\\1,g'                                                          
+}                                                                                                              
+                                                                                                               
+usage () {                                                                                                     
+    cat <<EOF                                                                                                  
+Usage: $0 [OPTIONS]                                                                                            
+    The following options may be given :                                                                       
+        --builddir=DIR      Absolute path to the dir where all actions will be performed                       
         --get_sources       Source will be downloaded from github
         --build_src_rpm     If it is 1 src rpm will be built
         --build_source_deb  If it is 1 source deb package will be built
@@ -83,14 +83,14 @@ check_workdir(){
 add_percona_yum_repo(){
     if [ ! -f /etc/yum.repos.d/percona-dev.repo ]
     then
-        curl -o /etc/yum.repos.d/ https://jenkins.percona.com/yum-repo/percona-dev.repo
+        curl -o /etc/yum.repos.d/percona-dev.repo https://jenkins.percona.com/yum-repo/percona-dev.repo
     fi
     return
 }
 
 add_percona_apt_repo(){
   if [ ! -f /etc/apt/sources.list.d/percona-dev.list ]; then
-    curl -o /etc/apt/sources.list.d/ https://jenkins.percona.com/apt-repo/percona-dev.list.template
+    curl -o /etc/apt/sources.list.d/percona-dev.list.template https://jenkins.percona.com/apt-repo/percona-dev.list.template
     mv /etc/apt/sources.list.d/percona-dev.list.template /etc/apt/sources.list.d/percona-dev.list
     sed -i "s:@@DIST@@:$OS_NAME:g" /etc/apt/sources.list.d/percona-dev.list
   fi
@@ -136,7 +136,7 @@ get_sources(){
     export MYSQL_VERSION="$MYSQL_VERSION_MAJOR.$MYSQL_VERSION_MINOR.$MYSQL_VERSION_PATCH"
     export MYSQL_RELEASE="$(echo $MYSQL_VERSION_EXTRA | sed 's/^-//')"
 
-    PRODUCT=Percona-XtraDB-Cluster-57
+    PRODUCT=Percona-XtraDB-Cluster-80
     PRODUCT_FULL=Percona-XtraDB-Cluster-${MYSQL_VERSION}-${WSREP_VERSION}
 
     echo "WSREP_VERSION=${WSREP_VERSION}" > ${WORKDIR}/pxc-57.properties
@@ -193,7 +193,7 @@ get_sources(){
     cp ${PXCDIR}.tar.gz $WORKDIR/source_tarball
     cp ${PXCDIR}.tar.gz $CURDIR/source_tarball
     cd $CURDIR
-    rm -rf percona-xtradb-cluster  
+    rm -rf percona-server  
     return
 }
 
@@ -227,15 +227,18 @@ install_deps() {
         ARCH=$(echo $(uname -m) | sed -e 's:i686:i386:g')
         add_percona_yum_repo
         yum -y install https://repo.percona.com/yum/percona-release-latest.noarch.rpm || true
-        percona-release enable origin release
+        percona-release enable original release
         yum -y install epel-release
         yum -y install git numactl-devel wget rpm-build gcc-c++ gperf ncurses-devel perl readline-devel openssl-devel jemalloc 
         yum -y install time zlib-devel libaio-devel bison cmake pam-devel libeatmydata jemalloc-devel
-        yum -y install perl-Time-HiRes libcurl-devel openldap-devel unzip wget libcurl-devel boost-static scons check-devel
+        yum -y install perl-Time-HiRes libcurl-devel openldap-devel unzip wget libcurl-devel boost-static
         yum -y install perl-Env perl-Data-Dumper perl-JSON MySQL-python perl-Digest perl-Digest-MD5 perl-Digest-Perl-MD5 || true
 
         if [ ${RHEL} -lt 7 -a $(uname -m) = x86_64 ]; then
             yum -y install percona-devtoolset-gcc percona-devtoolset-gcc-c++ percona-devtoolset-binutils 
+        fi
+        if [ "x$RHEL" = "x6" ]; then
+            yum -y install Percona-Server-shared-56  
         fi
     else
         apt-get -y install dirmngr || true
@@ -254,11 +257,17 @@ install_deps() {
         apt-get -y install psmisc
         apt-get -y install libsasl2-modules:amd64 || apt-get -y install libsasl2-modules
         apt-get -y install dh-systemd || true
-        apt-get -y install autoconf automake autotools-dev bison build-essential check chrpath cmake curl debconf debhelper devscripts \
-                           fakeroot g++ gawk gcc gdb ghostscript git libaio-dev libasio-dev libboost-all-dev libc6-dbg libcurl-dev \
-                           libcurl4-openssl-dev libeatmydata libjemalloc-dev libjson-perl libldap2-dev libmecab-dev libmecab2 \
-                           libncurses5-dev libnuma-dev libpam-dev libreadline-dev libsasl2-dev libssl-dev libwrap0-dev lsb-release \
-                           mecab mecab-ipadic openssl perl psmisc python-mysqldb scons socat unzip valgrind zlib1g-dev
+        apt-get -y install curl bison cmake perl libssl-dev gcc g++ libaio-dev libldap2-dev libwrap0-dev gdb unzip gawk
+        apt-get -y install lsb-release libmecab-dev libncurses5-dev libreadline-dev libpam-dev zlib1g-dev libcurl4-openssl-dev
+        apt-get -y install libldap2-dev libnuma-dev libjemalloc-dev libeatmydata libc6-dbg valgrind libjson-perl python-mysqldb libsasl2-dev
+        apt-get -y install zlib1g-dev devscripts debconf debhelper fakeroot git scons gcc g++ openssl check cmake bison
+        apt-get -y install libboost-all-dev libasio-dev libaio-dev libncurses5-dev libreadline-dev
+        apt-get -y install libpam-dev socat chrpath ghostscript gawk libwrap0-dev psmisc libmecab-dev libldap2-dev libcurl4-openssl-dev
+        apt-get -y install git scons gcc g++ openssl check cmake bison libboost-all-dev libasio-dev libaio-dev libncurses5-dev libreadline-dev 
+        apt-get -y install libpam-dev socat libcurl-dev
+        apt-get -y install libmecab2 mecab mecab-ipadic
+        apt-get -y install build-essential devscripts
+        apt-get -y install cmake autotools-dev autoconf automake build-essential devscripts debconf debhelper fakeroot 
     fi
     return;
 }
@@ -331,11 +340,15 @@ build_srpm(){
     cd ${WORKDIR}
     #
     mv -fv ${TARFILE} ${WORKDIR}/rpmbuild/SOURCES
+    cp ${WORKDIR}/rpmbuild/SOURCES/${TARFILE} ${WORKDIR}/rpmbuild/SOURCES/Percona-XtraDB-Cluster-8.0.13-3-31.33.tar.gz
+    cp ${WORKDIR}/rpmbuild/SOURCES/${TARFILE} ${WORKDIR}/rpmbuild/SOURCES/Percona-XtraDB-Cluster-8.0.13-31.33.tar.gz
+    cp -p $WORKDIR/../percona-xtradb-cluster.spec ${WORKDIR}/rpmbuild/SPECS/
     #
     sed -i "s:@@MYSQL_VERSION@@:${VERSION}:g" rpmbuild/SPECS/percona-xtradb-cluster.spec
     sed -i "s:@@PERCONA_VERSION@@:${RELEASE}:g" rpmbuild/SPECS/percona-xtradb-cluster.spec
     sed -i "s:@@WSREP_VERSION@@:${WSREP_VERSION}:g" rpmbuild/SPECS/percona-xtradb-cluster.spec
     sed -i "s:@@REVISION@@:${REVISION}:g" rpmbuild/SPECS/percona-xtradb-cluster.spec
+
     #
 
     SRCRPM=$(find . -name *.src.rpm)
@@ -353,11 +366,13 @@ build_srpm(){
         SCONS_ARGS=""
     fi
     source ${WORKDIR}/pxc-57.properties
-    if test "x${SCONS_ARGS}" == "x"
+    if [ -n ${SRCRPM} ]; then
+        if test "x${SCONS_ARGS}" == "x"
         then
             rpmbuild -bs --define "_topdir ${WORKDIR}/rpmbuild" --define "rpm_version $RPM_RELEASE" --define "galera_revision ${GALERA_REVNO}" --define "dist generic" rpmbuild/SPECS/percona-xtradb-cluster.spec
         else
             rpmbuild -bs --define "_topdir ${WORKDIR}/rpmbuild" --define "rpm_version $RPM_RELEASE" --define "galera_revision ${GALERA_REVNO}" --define "dist generic" --define "scons_args ${SCONS_ARGS}" rpmbuild/SPECS/percona-xtradb-cluster.spec
+        fi
     fi
     #
     echo "RPM_RELEASE=$RPM_RELEASE" >> pxc-57.properties
@@ -497,7 +512,7 @@ build_source_deb(){
         echo "It is not possible to build source deb here"
         exit 1
     fi
-    rm -rf percona-xtradb-cluster*
+    rm -rf percona-server*
     get_tar "source_tarball"
     rm -f *.dsc *.orig.tar.gz *.debian.tar.gz *.changes
     #
@@ -640,7 +655,7 @@ build_tarball(){
     fi
     get_tar "source_tarball"
     cd $WORKDIR
-    TARFILE=$(basename $(find . -iname 'percona-xtradb-cluster*.tar.gz' | sort | tail -n1))
+    TARFILE=$(basename $(find . -name 'percona-server-*.tar.gz' | sort | tail -n1))
     if [ -f /etc/debian_version ]; then
       export OS_RELEASE="$(lsb_release -sc)"
     fi
@@ -693,13 +708,11 @@ build_tarball(){
 
     export SCONS_ARGS=" strict_build_flags=0"
     bash -x ./build-ps/build-binary.sh --with-jemalloc=jemalloc/ -t 1.1 $BUILD_ROOT
-
-    mv $BUILD_NUMBER/*.tar.gz $ROOT_FS
+    mkdir -p ${WORKDIR}/tarball
+    mkdir -p ${CURDIR}/tarball
+    cp  $BUILD_NUMBER/*.tar.gz ${WORKDIR}/tarball
+    cp  $BUILD_NUMBER/*.tar.gz ${CURDIR}/tarball
     
-    mkdir -p ${WORKDIR}/${DIRNAME}
-    mkdir -p ${CURDIR}/${DIRNAME}
-    cp ../TARGET/*.tar.gz ${WORKDIR}/${DIRNAME}
-    cp ../TARGET/*.tar.gz ${CURDIR}/${DIRNAME}
 }
 
 #main
@@ -721,14 +734,15 @@ INSTALL=0
 RPM_RELEASE=1
 DEB_RELEASE=1
 REVISION=0
-BRANCH="5.7"
+BRANCH="8.0"
 MECAB_INSTALL_DIR="${WORKDIR}/mecab-install"
 REPO="git://github.com/percona/percona-xtradb-cluster.git"
-PRODUCT=Percona-XtraDB-Cluster-5.7
-MYSQL_VERSION=5.7.24
-MYSQL_RELEASE=26
+PRODUCT=Percona-XtraDB-Cluster
+MYSQL_VERSION=8.0.13
+MYSQL_RELEASE=3
 WSREP_VERSION=31.33
-PRODUCT_FULL=Percona-XtraDB-Cluster-5.7.24-31.33
+PRODUCT_FULL=Percona-XtraDB-Cluster-8.0.13-31.33
+BOOST_PACKAGE_NAME=boost_1_59_0
 parse_arguments PICK-ARGS-FROM-ARGV "$@"
 
 check_workdir
