@@ -562,7 +562,7 @@ build_deb(){
         mv debian/rules.notokudb debian/rules
         mv debian/control.notokudb debian/control
     else
-        if [ ${DEBIAN_VERSION} != trusty -a ${DEBIAN_VERSION} != xenial -a ${DEBIAN_VERSION} != stretch -a ${DEBIAN_VERSION} != jessie -a ${DEBIAN_VERSION} != vivid -a ${DEBIAN_VERSION} != yakkety -a ${DEBIAN_VERSION} != artful -a ${DEBIAN_VERSION} != bionic ]; then
+        if [ ${DEBIAN_VERSION} != trusty -a ${DEBIAN_VERSION} != xenial -a ${DEBIAN_VERSION} != stretch -a ${DEBIAN_VERSION} != jessie -a ${DEBIAN_VERSION} != vivid -a ${DEBIAN_VERSION} != yakkety -a ${DEBIAN_VERSION} != artful -a ${DEBIAN_VERSION} != bionic -a ${DEBIAN_VERSION} != cosmic ]; then
             gcc47=$(which gcc-4.7 2>/dev/null || true)
             if [ -x "${gcc47}" ]; then
                 export CC=gcc-4.7
@@ -577,8 +577,8 @@ build_deb(){
     fi
     #
 
-    if [ ${DEBIAN_VERSION} = "artful" -o ${DEBIAN_VERSION} = "bionic" ]; then
-        sed -i 's/export CFLAGS=/export CFLAGS=-Wimplicit-fallthrough=0 /' debian/rules 
+    if [ ${DEBIAN_VERSION} = "artful" -o ${DEBIAN_VERSION} = "bionic" -o ${DEBIAN_VERSION} = "cosmic" ]; then
+        sed -i 's/export CFLAGS=/export CFLAGS=-Wimplicit-fallthrough=0 /' debian/rules
         sed -i 's/export CXXFLAGS=/export CXXFLAGS=-Wimplicit-fallthrough=0 /' debian/rules
     fi
 
