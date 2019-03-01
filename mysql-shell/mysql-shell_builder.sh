@@ -143,7 +143,7 @@ get_protobuf(){
     bash -x autogen.sh
     bash -x configure --disable-shared
     make
-    make install
+    sudo make install
     mv src/.libs src/lib
     export PATH=$MY_PATH
     return
@@ -172,7 +172,7 @@ get_database(){
     fi
     mkdir bld
     cd bld
-    cmake .. -DDOWNLOAD_BOOST=1 -DENABLE_DOWNLOADS=1 -DWITH_SSL=system -DWITH_BOOST=$WORKDIR/boost
+    cmake .. -DDOWNLOAD_BOOST=1 -DENABLE_DOWNLOADS=1 -DWITH_SSL=system -DWITH_BOOST=$WORKDIR/boost -DWITH_PROTOBUF=bundled
     cmake --build . --target mysqlclient
     cmake --build . --target mysqlxclient
     cd $WORKDIR
@@ -181,58 +181,10 @@ get_database(){
 }
 
 get_v8(){
-    #it should be built with gcc-4.X
-    cd "${WORKDIR}"
-    if [ "x$OS" = "xdeb" ]; then
-        if [ "x$OS_NAME" = "xstretch" ]; then
-            export CC=/usr/bin/gcc-4.9
-            export CXX=/usr/bin/g++-4.9
-        else
-            export CC=/usr/bin/gcc-4.8
-            export CXX=/usr/bin/g++-4.8
-        fi
-    else
-        if [ "x$RHEL" = "x6" ]; then
-            source /opt/percona-devtoolset/enable
-        else
-            export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games
-        fi
-    fi
-    git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
-    export PATH=$(pwd)/depot_tools:$PATH
-    export VPYTHON_BYPASS="manually managed python not supported by chrome operations"
-    fetch v8
-    cd v8/
-    git checkout 6.7.288.46
-    gclient config https://chromium.googlesource.com/v8/v8
-    gclient sync
-    if [ "x$OS" = "xrpm" ]; then
-        if [ "x$RHEL" = "x6" ]; then
-            export CXXFLAGS='-Wno-unused-function -Wno-expansion-to-defined -Wno-strict-overflow'
-        fi
-    fi
-    if [ "x$OS" = "xdeb" ]; then
-        if [ "x$OS_NAME" != 'xxenial' ]; then
-            export CXXFLAGS='-fPIC -Wno-unused-function -Wno-expansion-to-defined -Wno-strict-overflow'
-        fi
-    fi
-    #export CXXFLAGS='-fPIC -Wno-unused-function -Wno-expansion-to-defined -Wno-strict-overflow'
-    cd ../
-    gclient sync
-    cd v8/
-    ./tools/dev/gm.py x64.release
-    retval=$?
-    if [ $retval != 0 ]
-    then
-        exit 1
-    fi
-    cd "${WORKDIR}"
-    if [ "x$OS" = "xdeb" ]; then
-        export CC=/usr/bin/gcc
-        export CXX=/usr/bin/g++
-    else
-        source /opt/rh/devtoolset-7/enable
-    fi
+    cd ${WORKDIR}
+    wget https://jenkins.percona.com/downloads/v8_6.7.288.46.tar.gz
+    tar -xzf v8_6.7.288.46.tar.gz
+    rm -rf v8_6.7.288.46.tar.gz
 }
 
 get_sources(){
@@ -525,12 +477,13 @@ build_rpm(){
     mkdir -vp rpmbuild/{SOURCES,SPECS,BUILD,SRPMS,RPMS}
     #
     mv *.src.rpm rpmbuild/SRPMS
+    get_protobuf
     get_database
     get_v8
     source /opt/rh/devtoolset-7/enable
     cd ${WORKDIR}
     #
-    rpmbuild --define "_topdir ${WORKDIR}/rpmbuild" --define "dist .el${RHEL}" --define "with_mysql_source $WORKDIR/percona-server" --define "static 1" --define "with_protobuf $WORKDIR/protobuf/src/" --define "v8_includedir $WORKDIR/v8/include" --define "v8_libdir $WORKDIR/v8/out/x64.release/obj.target/tools/gyp" --rebuild rpmbuild/SRPMS/${SRCRPM}
+    rpmbuild --define "_topdir ${WORKDIR}/rpmbuild" --define "dist .el${RHEL}" --define "with_mysql_source $WORKDIR/percona-server" --define "static 1" --define "with_protobuf $WORKDIR/protobuf/src/" --define "v8_includedir $WORKDIR/v8/include" --define "v8_libdir ${WORKDIR}/v8/out.gn/x64.release.sample/obj" --rebuild rpmbuild/SRPMS/${SRCRPM}
     return_code=$?
     if [ $return_code != 0 ]; then
         exit $return_code
@@ -597,7 +550,7 @@ build_deb(){
     fi
     for file in 'dsc' 'orig.tar.gz' 'changes' 'debian.tar*'
     do
-	ls $WORKDIR */*
+        ls $WORKDIR */*
         get_deb_sources $file
     done
     cd $WORKDIR
@@ -615,15 +568,15 @@ build_deb(){
     echo "VERSION=${VERSION}" >> mysql-shell.properties
     #
     dpkg-source -x ${DSC}
-    #get_protobuf
+    get_protobuf
     get_database
     get_v8
-    cd percona-mysql-shell-$SHELL_BRANCH-1
+    cd ${WORKDIR}/percona-mysql-shell-$SHELL_BRANCH-1
     sed -i 's/make -j8/make -j8\n\t/' debian/rules
     sed -i '/-DCMAKE/,/j8/d' debian/rules
     cp debian/mysql-shell.install debian/install
     sed -i 's:-rm -fr debian/tmp/usr/lib*/*.{so*,a} 2>/dev/null:-rm -fr debian/tmp/usr/lib*/*.{so*,a} 2>/dev/null\n\tmv debian/tmp/usr/local/* debian/tmp/usr/\n\trm -rf debian/tmp/usr/local:' debian/rules
-    sed -i "s:VERBOSE=1:-DCMAKE_BUILD_TYPE=RelWithDebInfo -DEXTRA_INSTALL=\"\" -DEXTRA_NAME_SUFFIX=\"\" -DMYSQL_SOURCE_DIR=${WORKDIR}/percona-server -DMYSQL_BUILD_DIR=${WORKDIR}/percona-server/bld -DMYSQL_EXTRA_LIBRARIES=\"-lz -ldl -lssl -lcrypto -licui18n -licuuc -licudata \" -DWITH_PROTOBUF=${WORKDIR}/protobuf/src -DV8_INCLUDE_DIR=${WORKDIR}/v8/include -DV8_LIB_DIR=${WORKDIR}/v8/out/x64.release/obj.target/tools/gyp -DHAVE_PYTHON=1 -DWITH_STATIC_LINKING=ON . \n\t DEB_BUILD_HARDENING=1 make -j8 VERBOSE=1:" debian/rules
+    sed -i "s:VERBOSE=1:-DCMAKE_BUILD_TYPE=RelWithDebInfo -DEXTRA_INSTALL=\"\" -DEXTRA_NAME_SUFFIX=\"\" -DMYSQL_SOURCE_DIR=${WORKDIR}/percona-server -DMYSQL_BUILD_DIR=${WORKDIR}/percona-server/bld -DMYSQL_EXTRA_LIBRARIES=\"-lz -ldl -lssl -lcrypto -licui18n -licuuc -licudata \" -DWITH_PROTOBUF=${WORKDIR}/protobuf/src -DV8_INCLUDE_DIR=${WORKDIR}/v8/include -DV8_LIB_DIR=${WORKDIR}/v8/out.gn/x64.release.sample/obj -DHAVE_PYTHON=1 -DWITH_STATIC_LINKING=ON . \n\t DEB_BUILD_HARDENING=1 make -j8 VERBOSE=1:" debian/rules
     sed -i 's:} 2>/dev/null:} 2>/dev/null\n\tmv debian/tmp/usr/local/* debian/tmp/usr/\n\trm -fr debian/tmp/usr/local:' debian/rules
     sed -i 's:, libprotobuf-dev, protobuf-compiler::' debian/control
 
@@ -678,7 +631,7 @@ build_tarball(){
             -DMYSQL_EXTRA_LIBRARIES="-lz -ldl -lssl -lcrypto -licui18n -licuuc -licudata " \
             -DWITH_PROTOBUF=${WORKDIR}/protobuf/src \
             -DV8_INCLUDE_DIR=${WORKDIR}/v8/include \
-            -DV8_LIB_DIR=${WORKDIR}/v8/out/x64.release/obj.target/tools/gyp \
+            -DV8_LIB_DIR=${WORKDIR}/v8/out.gn/x64.release.sample/obj \
             -DHAVE_PYTHON=1 \
             -DWITH_STATIC_LINKING=ON
     make -j4
@@ -708,7 +661,7 @@ OS=
 PROTOBUF_REPO="https://github.com/protocolbuffers/protobuf.git"
 SHELL_REPO="https://github.com/mysql/mysql-shell.git"
 SHELL_BRANCH="8.0.15"
-PROTOBUF_BRANCH=v2.6.1
+PROTOBUF_BRANCH=v3.6.1
 INSTALL=0
 RPM_RELEASE=1
 DEB_RELEASE=1
@@ -732,3 +685,4 @@ build_srpm
 build_source_deb
 build_rpm
 build_deb
+
