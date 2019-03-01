@@ -217,7 +217,9 @@ get_v8(){
         fi
     fi
     #export CXXFLAGS='-fPIC -Wno-unused-function -Wno-expansion-to-defined -Wno-strict-overflow'
-
+    cd ../
+    gclient sync
+    cd v8/
     ./tools/dev/gm.py x64.release
     retval=$?
     if [ $retval != 0 ]
