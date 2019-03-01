@@ -201,25 +201,11 @@ get_v8(){
     git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
     export PATH=$(pwd)/depot_tools:$PATH
     export VPYTHON_BYPASS="manually managed python not supported by chrome operations"
-    git clone https://chromium.googlesource.com/experimental/external/v8
+    fetch v8
     cd v8/
-    git checkout 31c0e32e19ad3df48525fa9e7b2d1c0c07496d00
-    sed -i 's|dependencies: builddeps|dependencies:|' Makefile
-    cd build
-    git clone https://chromium.googlesource.com/experimental/external/gyp
-    cd gyp/
-    git checkout a3e2a5caf24a1e0a45401e09ad131210bf16b852
-    cd ../../
-    cd third_party
-    git clone https://chromium.googlesource.com/chromium/deps/icu
-    cd icu/
-    git checkout 26d8859357ac0bfb86b939bf21c087b8eae22494
-    cd ../../testing
-    cp -r $WORKDIR/percona-server/source_downloads/googletest-release-1.8.0/googletest .
-    cp -r $WORKDIR/percona-server/source_downloads/googletest-release-1.8.0/googlemock .
-    mv googletest gtest
-    mv googlemock gmock
-    cd ../
+    git checkout 6.7.288.46
+    gclient config https://chromium.googlesource.com/v8/v8
+    gclient sync
     if [ "x$OS" = "xrpm" ]; then
         if [ "x$RHEL" = "x6" ]; then
             export CXXFLAGS='-Wno-unused-function -Wno-expansion-to-defined -Wno-strict-overflow'
@@ -231,9 +217,8 @@ get_v8(){
         fi
     fi
     #export CXXFLAGS='-fPIC -Wno-unused-function -Wno-expansion-to-defined -Wno-strict-overflow'
-    make dependencies
 
-    make v8_static_library=true v8_monolithic=true i18nsupport=off x64.release
+    ./tools/dev/gm.py x64.release
     retval=$?
     if [ $retval != 0 ]
     then
