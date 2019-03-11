@@ -88,21 +88,8 @@ check_workdir(){
 add_percona_yum_repo(){
     if [ ! -f /etc/yum.repos.d/percona-dev.repo ]
     then
-        cat >/etc/yum.repos.d/percona-dev.repo <<EOL
-[percona-dev-$basearch]
-name=Percona internal YUM repository for build slaves \$releasever - \$basearch
-baseurl=http://jenkins.percona.com/yum-repo/\$releasever/RPMS/\$basearch
-gpgkey=http://jenkins.percona.com/yum-repo/PERCONA-PACKAGING-KEY
-gpgcheck=0
-enabled=1
-
-[percona-dev-noarch]
-name=Percona internal YUM repository for build slaves \$releasever - noarch
-baseurl=http://jenkins.percona.com/yum-repo/\$releasever/RPMS/noarch
-gpgkey=http://jenkins.percona.com/yum-repo/PERCONA-PACKAGING-KEY
-gpgcheck=0
-enabled=1
-EOL
+        curl -o /etc/yum.repos.d/percona-dev.repo https://jenkins.percona.com/yum-repo/percona-dev.repo
+	sed -i 's:$basearch:x86_64:g' /etc/yum.repos.d/percona-dev.repo
     fi
     return
 }
@@ -120,7 +107,9 @@ EOL
 get_protobuf(){
     MY_PATH=$(echo $PATH)
     if [ "x$OS" = "xrpm" ]; then
-        source /opt/rh/devtoolset-7/enable
+	if [ $RHEL != 8 ]; then
+            source /opt/rh/devtoolset-7/enable
+        fi
     fi
     cd "${WORKDIR}"
     git clone "${PROTOBUF_REPO}"
@@ -138,7 +127,9 @@ get_protobuf(){
         sed -i 's;mv gtest-1.5.0 gtest;mv googletest-release-1.5.0 gtest;' autogen.sh
     fi
     if [ "x$OS" = "xrpm" ]; then
-        source /opt/rh/devtoolset-7/enable
+	if [ $RHEL != 8 ]; then
+            source /opt/rh/devtoolset-7/enable
+        fi
     fi
     bash -x autogen.sh
     bash -x configure --disable-shared
@@ -151,7 +142,9 @@ get_protobuf(){
 get_database(){
     MY_PATH=$(echo $PATH)
     if [ "x$OS" = "xrpm" ]; then
-        source /opt/rh/devtoolset-7/enable
+        if [ $RHEL != 8 ]; then
+            source /opt/rh/devtoolset-7/enable
+	fi
     fi
     cd "${WORKDIR}"
     git clone "${REPO}"
@@ -172,6 +165,7 @@ get_database(){
     fi
     mkdir bld
     cd bld
+    #cmake .. -DDOWNLOAD_BOOST=1 -DENABLE_DOWNLOADS=1 -DWITH_SSL=system -DWITH_BOOST=$WORKDIR/boost -DWITH_PROTOBUF=bundled
     cmake .. -DDOWNLOAD_BOOST=1 -DENABLE_DOWNLOADS=1 -DWITH_SSL=system -DWITH_BOOST=$WORKDIR/boost -DWITH_PROTOBUF=bundled
     cmake --build . --target mysqlclient
     cmake --build . --target mysqlxclient
@@ -196,7 +190,9 @@ get_sources(){
         return 0
     fi
     if [ "x$OS" = "xrpm" ]; then
-        source /opt/rh/devtoolset-7/enable
+	if [ $RHEL != 8 ]; then
+            source /opt/rh/devtoolset-7/enable
+	fi
     fi
     git clone "$SHELL_REPO"
     retval=$?
@@ -276,18 +272,31 @@ install_deps() {
         RHEL=$(rpm --eval %rhel)
         ARCH=$(echo $(uname -m) | sed -e 's:i686:i386:g')
         add_percona_yum_repo
-        yum -y install http://www.percona.com/downloads/percona-release/redhat/0.1-4/percona-release-0.1-4.noarch.rpm || true
-        yum -y install epel-release
-        yum -y install git numactl-devel rpm-build gcc-c++ gperf ncurses-devel perl readline-devel openssl-devel jemalloc 
-        yum -y install time zlib-devel libaio-devel bison cmake pam-devel libeatmydata jemalloc-devel
-        yum -y install perl-Time-HiRes libcurl-devel openldap-devel unzip wget libcurl-devel
-        yum -y install perl-Env perl-Data-Dumper perl-JSON MySQL-python perl-Digest perl-Digest-MD5 perl-Digest-Perl-MD5 || true
-        yum -y install libicu-devel automake m4 libtool python-devel zip rpmlint
-        until yum -y install centos-release-scl; do
-            echo "waiting"
-            sleep 1
-        done
-        yum -y install  gcc-c++ devtoolset-7-gcc-c++ devtoolset-7-binutils
+	if [ $RHEL = 8 ]; then
+            yum -y install binutils gcc gcc-c++ tar rpm-build rsync bison glibc glibc-devel libstdc++-devel libtirpc-devel make openssl-devel pam-devel perl perl-JSON perl-Memoize 
+            yum -y install automake autoconf cmake jemalloc jemalloc-devel
+	    yum -y install libaio-devel ncurses-devel numactl-devel readline-devel time
+            wget https://rpmfind.net/linux/fedora/linux/releases/29/Everything/x86_64/os/Packages/r/rpcgen-1.4-1.fc29.x86_64.rpm
+            yum -y install rpcgen-1.4-1.fc29.x86_64.rpm
+	    yum -y install automake m4 libtool python2-devel zip rpmlint
+	    yum -y install gperf ncurses-devel perl
+	    yum -y install libcurl-devel
+	    yum -y install perl-Env perl-Data-Dumper perl-JSON MySQL-python perl-Digest perl-Digest-MD5 perl-Digest-Perl-MD5 || true
+            yum -y install libicu-devel automake m4 libtool python2-devel zip rpmlint
+        else
+            yum -y install http://www.percona.com/downloads/percona-release/redhat/0.1-4/percona-release-0.1-4.noarch.rpm || true
+            yum -y install epel-release
+            yum -y install git numactl-devel rpm-build gcc-c++ gperf ncurses-devel perl readline-devel openssl-devel jemalloc 
+            yum -y install time zlib-devel libaio-devel bison cmake pam-devel libeatmydata jemalloc-devel
+            yum -y install perl-Time-HiRes libcurl-devel openldap-devel unzip wget libcurl-devel
+            yum -y install perl-Env perl-Data-Dumper perl-JSON MySQL-python perl-Digest perl-Digest-MD5 perl-Digest-Perl-MD5 || true
+            yum -y install libicu-devel automake m4 libtool python-devel zip rpmlint
+            until yum -y install centos-release-scl; do
+                echo "waiting"
+                sleep 1
+            done
+            yum -y install  gcc-c++ devtoolset-7-gcc-c++ devtoolset-7-binutils
+        fi
         if [ "x$RHEL" = "x6" ]; then
             yum -y install Percona-Server-shared-56
             yum install -y percona-devtoolset-gcc percona-devtoolset-binutils python-devel percona-devtoolset-gcc-c++ percona-devtoolset-libstdc++-devel percona-devtoolset-valgrind-devel
@@ -391,7 +400,9 @@ build_srpm(){
         echo "It is not possible to build src rpm here"
         exit 1
     fi
-    source /opt/rh/devtoolset-7/enable
+    if [ $RHEL != 8 ]; then
+        source /opt/rh/devtoolset-7/enable
+    fi
     cd $WORKDIR
     get_tar "source_tarball"
     rm -fr rpmbuild
@@ -424,6 +435,7 @@ build_srpm(){
     sed -i 's/@PRODUCT@/MySQL Shell/' mysql-shell.spec
     sed -i 's/@MYSH_VERSION@/8.0.15/g' mysql-shell.spec
     sed -i "s:-DHAVE_PYTHON=1 \ : -DHAVE_PYTHON=1 -DWITH_STATIC_LINKING=ON -DMYSQL_EXTRA_LIBRARIES='-lz -ldl -lssl -lcrypto -licui18n -licuuc -licudata' :" mysql-shell.spec
+    sed -i "s|BuildRequires:  python-devel|%if 0%{?rhel} > 7\nBuildRequires:  python2-devel\n%else\nBuildRequires:  python-devel\n%endif|" mysql-shell.spec
     mv mysql-shell.spec percona-mysql-shell.spec
     cd ${WORKDIR}
     #
@@ -480,7 +492,9 @@ build_rpm(){
     get_protobuf
     get_database
     get_v8
-    source /opt/rh/devtoolset-7/enable
+    if [ $RHEL != 8 ]; then
+        source /opt/rh/devtoolset-7/enable
+    fi
     cd ${WORKDIR}
     #
     rpmbuild --define "_topdir ${WORKDIR}/rpmbuild" --define "dist .el${RHEL}" --define "with_mysql_source $WORKDIR/percona-server" --define "static 1" --define "with_protobuf $WORKDIR/protobuf/src/" --define "v8_includedir $WORKDIR/v8/include" --define "v8_libdir ${WORKDIR}/v8/out.gn/x64.release.sample/obj" --rebuild rpmbuild/SRPMS/${SRCRPM}
@@ -604,7 +618,9 @@ build_tarball(){
     if [ -f /etc/redhat-release ]; then
         export OS_RELEASE="centos$(lsb_release -sr | awk -F'.' '{print $1}')"
         RHEL=$(rpm --eval %rhel)
-        source /opt/rh/devtoolset-7/enable
+	if [ $RHEL != 8 ]; then
+            source /opt/rh/devtoolset-7/enable
+        fi
     fi
     #
     ARCH=$(uname -m 2>/dev/null||true)
