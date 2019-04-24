@@ -296,8 +296,13 @@ install_deps() {
         yum -y install time zlib-devel libaio-devel bison cmake pam-devel libeatmydata jemalloc-devel
         yum -y install perl-Time-HiRes numactl-devel || true
         yum -y install selinux-policy-devel || true
-        if [ ${ARCH} = x86_64 -a ${RHEL} != 7 ]; then
-           yum install -y percona-devtoolset-gcc percona-devtoolset-binutils percona-devtoolset-gcc-c++ percona-devtoolset-libstdc++-devel percona-devtoolset-valgrind-devel
+	if [ ${RHEL} -lt 7 ]; then
+	    if [ $(uname -m) = x86_64 ]; then
+               yum install -y percona-devtoolset-gcc percona-devtoolset-binutils percona-devtoolset-gcc-c++ percona-devtoolset-libstdc++-devel percona-devtoolset-valgrind-devel
+	    else
+               wget -O /etc/yum.repos.d/slc6-devtoolset.repo http://linuxsoft.cern.ch/cern/devtoolset/slc6-devtoolset.repo
+               wget -O /etc/pki/rpm-gpg/RPM-GPG-KEY-cern https://raw.githubusercontent.com/cms-sw/cms-docker/master/slc6-vanilla/RPM-GPG-KEY-cern
+               yum -y install  devtoolset-2-gcc-c++ devtoolset-2-binutils libevent2-devel
         fi
         yum -y install Percona-Server-shared-56  
     else
@@ -444,9 +449,11 @@ build_rpm(){
     echo "RHEL=${RHEL}" >> percona-server-5.6.properties
     echo "ARCH=${ARCH}" >> percona-server-5.6.properties
     #
-    if [ ${ARCH} = x86_64 ]; then
-        if [ ${RHEL} != 7 ]; then
+    if [ ${RHEL} = 6 ]; then
+        if [ ${ARCH} = x86_64 ]; then
             source /opt/percona-devtoolset/enable
+	else
+            source /opt/rh/devtoolset-2/enable
         fi
         rpmbuild --define "_topdir ${WORKDIR}/rpmbuild" --with tokudb --define "dist .el${RHEL}" --rebuild rpmbuild/SRPMS/${SRC_RPM}
     else
