@@ -296,15 +296,16 @@ install_deps() {
         yum -y install time zlib-devel libaio-devel bison cmake pam-devel libeatmydata jemalloc-devel
         yum -y install perl-Time-HiRes numactl-devel || true
         yum -y install selinux-policy-devel || true
-	if [ ${RHEL} -lt 7 ]; then
-	    if [ $(uname -m) = x86_64 ]; then
+	    if [ ${RHEL} -lt 7 ]; then
+	        if [ $(uname -m) = x86_64 ]; then
                yum install -y percona-devtoolset-gcc percona-devtoolset-binutils percona-devtoolset-gcc-c++ percona-devtoolset-libstdc++-devel percona-devtoolset-valgrind-devel
-	    else
+	        else
                wget -O /etc/yum.repos.d/slc6-devtoolset.repo http://linuxsoft.cern.ch/cern/devtoolset/slc6-devtoolset.repo
                wget -O /etc/pki/rpm-gpg/RPM-GPG-KEY-cern https://raw.githubusercontent.com/cms-sw/cms-docker/master/slc6-vanilla/RPM-GPG-KEY-cern
                yum -y install  devtoolset-2-gcc-c++ devtoolset-2-binutils libevent2-devel
+            fi
+            yum -y install Percona-Server-shared-56
         fi
-        yum -y install Percona-Server-shared-56  
     else
         apt-get -y install dirmngr || true
         add_percona_apt_repo
