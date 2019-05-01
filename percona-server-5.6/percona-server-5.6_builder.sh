@@ -453,12 +453,13 @@ build_rpm(){
     if [ ${RHEL} = 6 ]; then
         if [ ${ARCH} = x86_64 ]; then
             source /opt/percona-devtoolset/enable
+            rpmbuild --define "_topdir ${WORKDIR}/rpmbuild" --with tokudb --define "dist .el${RHEL}" --rebuild rpmbuild/SRPMS/${SRC_RPM}
 	else
             source /opt/rh/devtoolset-2/enable
+            rpmbuild --define "_topdir ${WORKDIR}/rpmbuild" --define "dist .el${RHEL}" --rebuild rpmbuild/SRPMS/${SRC_RPM}
         fi
-        rpmbuild --define "_topdir ${WORKDIR}/rpmbuild" --with tokudb --define "dist .el${RHEL}" --rebuild rpmbuild/SRPMS/${SRC_RPM}
     else
-        rpmbuild --define "_topdir ${WORKDIR}/rpmbuild" --define "dist .el${RHEL}" --rebuild rpmbuild/SRPMS/${SRC_RPM}
+        rpmbuild --define "_topdir ${WORKDIR}/rpmbuild" --with tokudb --define "dist .el${RHEL}" --rebuild rpmbuild/SRPMS/${SRC_RPM}
     fi
 
     return_code=$?
