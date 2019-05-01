@@ -289,7 +289,7 @@ install_deps() {
         RHEL=$(rpm --eval %rhel)
         ARCH=$(echo $(uname -m) | sed -e 's:i686:i386:g')
         add_percona_yum_repo
-        yum -y install http://www.percona.com/downloads/percona-release/redhat/0.1-4/percona-release-0.1-4.noarch.rpm || true
+	yum -y install https://repo.percona.com/yum/percona-release-1.0-11.noarch.rpm || true
         yum -y install epel-release git redhat-lsb
         yum clean metadata
         yum -y install libtool rpm-build gcc-c++ gperf ncurses-devel perl readline-devel openssl-devel jemalloc 
