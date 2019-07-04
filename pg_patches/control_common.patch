@@ -1,0 +1,152 @@
+--- control	2019-07-04 11:50:26.489670000 +0000
++++ control	2019-07-04 11:55:19.881670000 +0000
+@@ -1,28 +1,21 @@
+-Source: postgresql-common
++Source: percona-platform-postgresql-common
+ Section: database
+ Priority: optional
+-Maintainer: Debian PostgreSQL Maintainers <team+postgresql@tracker.debian.org>
+-Uploaders:
+- Martin Pitt <mpitt@debian.org>,
+- Christoph Berg <myon@debian.org>,
+- Peter Eisentraut <petere@debian.org>,
+-Standards-Version: 4.3.0
+-Vcs-Git: https://salsa.debian.org/postgresql/postgresql-common.git
+-Vcs-Browser: https://salsa.debian.org/postgresql/postgresql-common
++Maintainer: Percona Development <info@percona.com>
+ Build-Depends:
+  debhelper (>= 9),
+  debhelper (>= 10.1) | dh-systemd (>= 1.19),
+  libreadline-dev,
+  lsb-release,
+ 
+-Package: postgresql-common
++Package: percona-platform-postgresql-common
+ Architecture: all
+ Multi-Arch: foreign
+ Depends:
+  adduser,
+  debconf (>= 0.5.00) | debconf-2.0,
+  lsb-base (>= 3.0-3),
+- postgresql-client-common (= ${source:Version}),
++ percona-platform-postgresql-client-common (= ${source:Version}),
+  procps,
+  ssl-cert (>= 1.0.11),
+  ucf,
+@@ -36,7 +29,7 @@
+  postgresql-9.1 (<< 9.1.1-3~),
+  systemd (<< 204),
+ Description: PostgreSQL database-cluster manager
+- The postgresql-common package provides a structure under which
++ The percona-platform-postgresql-common package provides a structure under which
+  multiple versions of PostgreSQL may be installed and/or multiple
+  clusters maintained at one time.
+  .
+@@ -51,7 +44,7 @@
+  outer joins, multiversion concurrency control, and user-defined types
+  and functions.
+ 
+-Package: postgresql-client-common
++Package: percona-platform-postgresql-client-common
+ Architecture: all
+ Multi-Arch: foreign
+ Depends:
+@@ -62,7 +55,7 @@
+  lsb-release,
+  ${readline:Recommends},
+ Description: manager for multiple PostgreSQL client versions
+- The postgresql-client-common package provides a structure under which
++ The percona-platform-postgresql-client-common package provides a structure under which
+  multiple versions of PostgreSQL client programs may be installed at
+  the same time. It provides a wrapper which selects the right version
+  for the particular cluster you want to access (with a command line
+@@ -76,13 +69,13 @@
+  outer joins, multiversion concurrency control, and user-defined types
+  and functions.
+ 
+-Package: postgresql-server-dev-all
++Package: percona-platform-postgresql-server-dev-all
+ Architecture: all
+ Depends:
+  dctrl-tools,
+  lsb-release,
+  make,
+- postgresql-common (>= 117~),
++ percona-platform-postgresql-common (>= 117~),
+  ${misc:Depends},
+  ${server-dev-all-depends},
+ Description: extension build tool for multiple PostgreSQL versions
+@@ -97,13 +90,13 @@
+  outer joins, multiversion concurrency control, and user-defined types
+  and functions.
+ 
+-Package: postgresql
++Package: percona-platform-postgresql
+ Architecture: all
+ Depends:
+- postgresql-${default-version},
++ percona-platform-postgresql-${default-version},
+  ${misc:Depends},
+ Suggests:
+- postgresql-doc,
++ percona-platform-postgresql-doc,
+ Description: object-relational SQL database (supported version)
+  This metapackage always depends on the currently supported PostgreSQL
+  database server version.
+@@ -116,11 +109,11 @@
+  concurrency control.  Graphical user interfaces and bindings for many
+  programming languages are available as well.
+ 
+-Package: postgresql-client
++Package: percona-platform-postgresql-client
+ Architecture: all
+ Multi-Arch: foreign
+ Depends:
+- postgresql-client-${default-version},
++ percona-platform-postgresql-client-${default-version},
+  ${misc:Depends},
+ Description: front-end programs for PostgreSQL (supported version)
+  This metapackage always depends on the currently supported database
+@@ -134,12 +127,12 @@
+  concurrency control.  Graphical user interfaces and bindings for many
+  programming languages are available as well.
+ 
+-Package: postgresql-doc
++Package: percona-platform-postgresql-doc
+ Architecture: all
+ Multi-Arch: foreign
+ Section: doc
+ Depends:
+- postgresql-doc-${default-version},
++ percona-platform-postgresql-doc-${default-version},
+  ${misc:Depends},
+ Description: documentation for the PostgreSQL database management system
+  This metapackage always depends on the currently supported PostgreSQL
+@@ -153,10 +146,10 @@
+  concurrency control.  Graphical user interfaces and bindings for many
+  programming languages are available as well.
+ 
+-Package: postgresql-contrib
++Package: percona-platform-postgresql-contrib
+ Architecture: all
+ Depends:
+- postgresql-contrib-${default-version},
++ percona-platform-postgresql-contrib-${default-version},
+  ${misc:Depends},
+ Description: additional facilities for PostgreSQL (supported version)
+  This metapackage always depends on the currently supported PostgreSQL
+@@ -170,12 +163,12 @@
+  concurrency control.  Graphical user interfaces and bindings for many
+  programming languages are available as well.
+ 
+-Package: postgresql-all
++Package: percona-platform-postgresql-all
+ Architecture: all
+ Depends:
+  libecpg-dev,
+  libpq-dev,
+- postgresql-server-dev-all,
++ percona-platform-postgresql-server-dev-all,
+  ${postgresql-all-depends},
+  ${misc:Depends},
+ Description: metapackage depending on all PostgreSQL server packages
