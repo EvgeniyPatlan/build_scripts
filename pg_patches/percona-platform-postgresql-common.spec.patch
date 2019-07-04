@@ -2,7 +2,7 @@
 +++ percona-platform-postgresql-common.spec	2019-07-04 13:02:02.017670000 +0000
 @@ -1,23 +1,22 @@
 -Name:           postgresql-common
-+Name:           percona-platfrom-postgresql-common
++Name:           percona-platform-postgresql-common
  Version:        %{version}
  Release:        1%{?dist}
  BuildArch:      noarch
@@ -23,10 +23,10 @@
  clusters maintained at one time.
  
 -%package -n postgresql-client-common
-+%package -n percona-platfrom-postgresql-client-common
++%package -n percona-platform-postgresql-client-common
  Summary: manager for multiple PostgreSQL client versions
 -%description -n postgresql-client-common
-+%description -n percona-platfrom-postgresql-client-common
++%description -n percona-platform-postgresql-client-common
  The postgresql-client-common package provides a structure under which
  multiple versions of PostgreSQL client programs may be installed at
  the same time. It provides a wrapper which selects the right version
@@ -35,12 +35,12 @@
  or ~/.postgresqlrc).
  
 -%package -n postgresql-server-dev-all
-+%package -n percona-platfrom-postgresql-server-dev-all
++%package -n percona-platform-postgresql-server-dev-all
  Summary: extension build tool for multiple PostgreSQL versions
 -%description -n postgresql-server-dev-all
 -The postgresql-server-dev-all package provides the pg_buildext script for
-+%description -n percona-platfrom-postgresql-server-dev-all
-+The percona-platfrom-postgresql-server-dev-all package provides the pg_buildext script for
++%description -n percona-platform-postgresql-server-dev-all
++The percona-platform-postgresql-server-dev-all package provides the pg_buildext script for
  simplifying packaging of a PostgreSQL extension supporting multiple major
  versions of the product.
  
@@ -49,7 +49,7 @@
  %setup -c
  mv */* .
 -# Remove Requires: perl(Test::More) so postgresql-common only depends on perl
-+# Remove Requires: perl(Test::More) so percona-platfrom-postgresql-common only depends on perl
++# Remove Requires: perl(Test::More) so percona-platform-postgresql-common only depends on perl
  echo "#!/bin/sh" > %{_builddir}/find-requires
  echo "/usr/lib/rpm/find-requires | sed -e 's/perl(Test::More)//'" >> %{_builddir}/find-requires
  chmod +x %{_builddir}/find-requires
@@ -60,8 +60,8 @@
 -    echo "update-alternatives --install /$link $name /$dest 9999" >> postgresql-client-common.post
 -    echo "update-alternatives --remove $name /$dest" >> postgresql-client-common.preun
 -done < debian/postgresql-client-common.links
-+    echo "update-alternatives --install /$link $name /$dest 9999" >> percona-platfrom-postgresql-client-common.post
-+    echo "update-alternatives --remove $name /$dest" >> percona-platfrom-postgresql-client-common.preun
++    echo "update-alternatives --install /$link $name /$dest 9999" >> percona-platform-postgresql-client-common.post
++    echo "update-alternatives --remove $name /$dest" >> percona-platform-postgresql-client-common.preun
 +done < debian/percona-platform-postgresql-client-common.links
  # activate rpm-specific tweaks
  sed -i -e 's/#redhat# //' \
@@ -72,12 +72,12 @@
  mkdir -p %{buildroot}/etc/init.d %{buildroot}/etc/logrotate.d
 -cp debian/postgresql-common.postgresql.init %{buildroot}/etc/init.d/postgresql
 -#cp debian/postgresql-common.postinst %{buildroot}/usr/share/postgresql-common
-+cp debian/percona-platfrom-postgresql-common.postgresql.init %{buildroot}/etc/init.d/postgresql
++cp debian/percona-platform-postgresql-common.postgresql.init %{buildroot}/etc/init.d/postgresql
  cp rpm/init-functions-compat %{buildroot}/usr/share/postgresql-common
  # ssl defaults to 'off' here because we don't have pregenerated snakeoil certs
  sed -e 's/__SSL__/off/' createcluster.conf > %{buildroot}/etc/postgresql-common/createcluster.conf
 -cp debian/postgresql-common.logrotate %{buildroot}/etc/logrotate.d/postgresql-common
-+cp debian/percona-platfrom-postgresql-common.logrotate %{buildroot}/etc/logrotate.d/postgresql-common
++cp debian/percona-platform-postgresql-common.logrotate %{buildroot}/etc/logrotate.d/postgresql-common
  
  %if 0%{?rhel} >= 7
  # Prepare systemd unit files, but only for RHEL/CentOS 7 and above...
@@ -86,7 +86,7 @@
  %endif
  
 -%files -n postgresql-common -f files-postgresql-common
-+%files -n percona-platfrom-postgresql-common -f files-percona-platfrom-postgresql-common
++%files -n percona-platform-postgresql-common -f files-percona-platform-postgresql-common
  %attr(0755, root, root) %config /etc/init.d/postgresql
 -#%attr(0755, root, root) /usr/share/postgresql-common/postgresql-common.postinst
  /usr/share/postgresql-common/init-functions-compat
@@ -97,10 +97,10 @@
  %endif
  
 -%files -n postgresql-client-common -f files-postgresql-client-common
-+%files -n percona-platfrom-postgresql-client-common -f files-percona-platfrom-postgresql-client-common
++%files -n percona-platform-postgresql-client-common -f files-percona-platform-postgresql-client-common
  
 -%files -n postgresql-server-dev-all -f files-postgresql-server-dev-all
-+%files -n percona-platfrom-postgresql-server-dev-all -f files-percona-platfrom-postgresql-server-dev-all
++%files -n percona-platform-postgresql-server-dev-all -f files-percona-platform-postgresql-server-dev-all
  
  %post
  # create postgres user
@@ -109,11 +109,11 @@
  fi
  
 -%post -n postgresql-client-common -f postgresql-client-common.post
-+%post -n percona-platfrom-postgresql-client-common -f percona-platfrom-postgresql-client-common.post
++%post -n percona-platform-postgresql-client-common -f percona-platform-postgresql-client-common.post
  update-alternatives --install /usr/bin/ecpg pgsql-ecpg /usr/share/postgresql-common/pg_wrapper 9999
  
 -%preun -n postgresql-client-common -f postgresql-client-common.preun
-+%preun -n percona-platform-postgresql-client-common -f percona-platfrom-postgresql-client-common.preun
++%preun -n percona-platform-postgresql-client-common -f percona-platform-postgresql-client-common.preun
  update-alternatives --remove pgsql-ecpg /usr/share/postgresql-common/pg_wrapper
  
  %changelog

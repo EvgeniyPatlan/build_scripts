@@ -14,18 +14,18 @@
  
  configure_contrib_version() {
 -    _link_manpages "$1" postmaster.1.gz "postgresql-$1" "postgresql-contrib-$1"
-+    _link_manpages "$1" postmaster.1.gz "ercona-platform-postgresql-$1" "percona-platfrom-postgresql-contrib-$1"
++    _link_manpages "$1" postmaster.1.gz "ercona-platform-postgresql-$1" "percona-platform-postgresql-contrib-$1"
  }
  
  remove_contrib_version() {
      # we still want to retain the alternatives for the server packages
 -    _link_manpages "$1" postmaster.1.gz "postgresql-$1"
-+    _link_manpages "$1" postmaster.1.gz "percona-platfrom-postgresql-$1"
++    _link_manpages "$1" postmaster.1.gz "percona-platform-postgresql-$1"
  }
  
  configure_doc_version() {
 -    _link_manpages "$1" SPI_connect.3.gz "postgresql-doc-$1"
-+    _link_manpages "$1" SPI_connect.3.gz "percona-platfrom-postgresql-doc-$1"
++    _link_manpages "$1" SPI_connect.3.gz "percona-platform-postgresql-doc-$1"
  }
  
  remove_doc_version() {
@@ -40,13 +40,13 @@
 -        db_subst postgresql-common/catversion-bump new_catversion $NEW_CATVERSION
 -        db_subst postgresql-common/catversion-bump vartmpdir $VARTMPDIR
 -        db_input high postgresql-common/catversion-bump || true
-+        db_fset percona-platfrom-postgresql-common/catversion-bump seen false
-+        db_subst percona-platfrom-postgresql-common/catversion-bump version $MAJOR_VER
-+        db_subst percona-platfrom-postgresql-common/catversion-bump cluster $cluster
-+        db_subst percona-platfrom-postgresql-common/catversion-bump db_catversion $DB_CATVERSION
-+        db_subst percona-platfrom-postgresql-common/catversion-bump new_catversion $NEW_CATVERSION
-+        db_subst percona-platfrom-postgresql-common/catversion-bump vartmpdir $VARTMPDIR
-+        db_input high percona-platfrom-postgresql-common/catversion-bump || true
++        db_fset percona-platform-postgresql-common/catversion-bump seen false
++        db_subst percona-platform-postgresql-common/catversion-bump version $MAJOR_VER
++        db_subst percona-platform-postgresql-common/catversion-bump cluster $cluster
++        db_subst percona-platform-postgresql-common/catversion-bump db_catversion $DB_CATVERSION
++        db_subst percona-platform-postgresql-common/catversion-bump new_catversion $NEW_CATVERSION
++        db_subst percona-platform-postgresql-common/catversion-bump vartmpdir $VARTMPDIR
++        db_input high percona-platform-postgresql-common/catversion-bump || true
          db_go || true
      done
  }
@@ -55,7 +55,7 @@
  if [ "${DPKG_MAINTSCRIPT_NAME:-}" = "postinst" ] && [ "$1" = "configure" ]; then
      case $DPKG_MAINTSCRIPT_PACKAGE in
 -        postgresql-[89].?|postgresql-[1-9]?)
-+        percona-platfrom-postgresql-[89].?|percona-platfrom-postgresql-[1-9]?)
++        percona-platform-postgresql-[89].?|percona-platform-postgresql-[1-9]?)
              . /usr/share/debconf/confmodule
              ;;
      esac
