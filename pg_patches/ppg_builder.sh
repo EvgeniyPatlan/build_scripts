@@ -220,17 +220,17 @@ install_deps() {
       export ARCH=$(echo $(uname -m) | sed -e 's:i686:i386:g')
       apt-get -y install gnupg2
       add_percona_apt_repo
-      until apt-get update; do
-        sleep 1
-        echo "waiting"
-      done
+      apt-get update || true
       ENV export DEBIAN_FRONTEND=noninteractive
       DEBIAN_FRONTEND=noninteractive apt-get -y install tzdata
       ln -fs /usr/share/zoneinfo/America/New_York /etc/localtime
       dpkg-reconfigure --frontend noninteractive tzdata
-      echo "deb http://apt.llvm.org/${DEBIAN}/ llvm-toolchain-${DEBIAN} main" >> /etc/apt/sources.list
-      echo "deb-src http://apt.llvm.org/${DEBIAN}/ llvm-toolchain-${DEBIAN} main" >> /etc/apt/sources.list
-      
+      LLVM_EXISTS=$(grep -c "apt.llvm.org" /etc/apt/sources.list)
+      if [ ${LLVM_EXISTS} = 0 ]; then
+          echo "deb http://apt.llvm.org/${DEBIAN}/ llvm-toolchain-${DEBIAN} main" >> /etc/apt/sources.list
+          echo "deb-src http://apt.llvm.org/${DEBIAN}/ llvm-toolchain-${DEBIAN} main" >> /etc/apt/sources.list
+          apt-get update
+      fi
       INSTALL_LIST="bison build-essential ccache clang-7 cron debconf debhelper devscripts dh-exec dh-systemd docbook-xml docbook-xsl dpkg-dev flex gcc gettext git krb5-multidev libbsd-resource-perl libedit-dev libicu-dev libipc-run-perl libkrb5-dev libldap-dev libldap2-dev libmemchan-tcl-dev libpam0g-dev libperl-dev libpython-dev libreadline-dev libselinux1-dev libssl-dev libsystemd-dev libwww-perl libxml2-dev libxml2-utils libxslt-dev libxslt1-dev llvm-7-dev perl pkg-config python python-dev python3-dev systemtap-sdt-dev tcl-dev tcl8.6-dev uuid-dev vim wget xsltproc zlib1g-dev rename"
       until DEBIAN_FRONTEND=noninteractive apt-get -y --allow-unauthenticated install ${INSTALL_LIST}; do
         sleep 1
