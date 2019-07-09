@@ -203,17 +203,14 @@ install_deps() {
       yum clean all
       RHEL=$(rpm --eval %rhel)
       yum -y install epel-release
-      INSTALL_LIST="git patch perl perl-ExtUtils-MakeMaker perl-ExtUtils-Embed rpmbuild rpmdevtools wget"
+      INSTALL_LIST="git patch perl perl-ExtUtils-MakeMaker perl-ExtUtils-Embed rpmbuild rpmdevtools wget perl-podlators"
       yum -y install ${INSTALL_LIST}
     else
       export DEBIAN=$(lsb_release -sc)
       export ARCH=$(echo $(uname -m) | sed -e 's:i686:i386:g')
       apt-get -y install gnupg2
       add_percona_apt_repo
-      until apt-get update; do
-        sleep 1
-        echo "waiting"
-      done
+      apt-get update || true
       INSTALL_LIST="git wget debhelper libreadline-dev lsb-release rename devscripts"
       until DEBIAN_FRONTEND=noninteractive apt-get -y install ${INSTALL_LIST}; do
         sleep 1
@@ -334,7 +331,7 @@ build_rpm(){
     cd $WORKDIR
     RHEL=$(rpm --eval %rhel)
     ARCH=$(echo $(uname -m) | sed -e 's:i686:i386:g')
-    rpmbuild --define "_topdir ${WORKDIR}/rpmbuild" --define "dist .$OS_NAME" --rebuild rpmbuild/SRPMS/$SRC_RPM
+    rpmbuild --define "_topdir ${WORKDIR}/rpmbuild" --define "version ${VERSION}" --define "dist .$OS_NAME" --rebuild rpmbuild/SRPMS/$SRC_RPM
 
     return_code=$?
     if [ $return_code != 0 ]; then
