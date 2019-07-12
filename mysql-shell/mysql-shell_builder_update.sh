@@ -327,7 +327,8 @@ install_deps() {
         apt-get -y install libldap2-dev libnuma-dev libjemalloc-dev libeatmydata libc6-dbg valgrind libjson-perl python-mysqldb libsasl2-dev
         apt-get -y install libmecab2 mecab mecab-ipadic libicu-devel
         apt-get -y install build-essential devscripts doxygen doxygen-gui graphviz rsync libprotobuf-dev protobuf-compiler
-        apt-get -y install cmake autotools-dev autoconf automake build-essential devscripts debconf debhelper fakeroot libicu-dev libtool
+        apt-get -y install cmake autotools-dev autoconf automake build-essential devscripts debconf debhelper fakeroot libtool
+	apt-get -y install libicu-dev
         if [ "x$OS_NAME" = "xstretch" ]; then
             echo "deb http://ftp.us.debian.org/debian/ jessie main contrib non-free" >> /etc/apt/sources.list
             apt-get update
@@ -429,11 +430,11 @@ build_srpm(){
     sed -i '/with_protobuf/,/endif/d' mysql-shell.spec
     sed -i 's/@COMMERCIAL_VER@/0/g' mysql-shell.spec
     sed -i 's/@PRODUCT_SUFFIX@//g' mysql-shell.spec
-    sed -i 's/@MYSH_NO_DASH_VERSION@/8.0.15/g' mysql-shell.spec
+    sed -i 's/@MYSH_NO_DASH_VERSION@/8.0.16/g' mysql-shell.spec
     sed -i "s:@RPM_RELEASE@:${RPM_RELEASE}:g" mysql-shell.spec
     sed -i 's/@LICENSE_TYPE@/GPLv2/g' mysql-shell.spec
     sed -i 's/@PRODUCT@/MySQL Shell/' mysql-shell.spec
-    sed -i 's/@MYSH_VERSION@/8.0.15/g' mysql-shell.spec
+    sed -i 's/@MYSH_VERSION@/8.0.16/g' mysql-shell.spec
     sed -i "s:-DHAVE_PYTHON=1 \ : -DHAVE_PYTHON=1 -DWITH_STATIC_LINKING=ON -DMYSQL_EXTRA_LIBRARIES='-lz -ldl -lssl -lcrypto -licui18n -licuuc -licudata' :" mysql-shell.spec
     sed -i "s|BuildRequires:  python-devel|%if 0%{?rhel} > 7\nBuildRequires:  python2-devel\n%else\nBuildRequires:  python-devel\n%endif|" mysql-shell.spec
     mv mysql-shell.spec percona-mysql-shell.spec
@@ -497,7 +498,7 @@ build_rpm(){
     fi
     cd ${WORKDIR}
     #
-    rpmbuild --define "_topdir ${WORKDIR}/rpmbuild" --define "dist .el${RHEL}" --define "with_mysql_source $WORKDIR/percona-server" --define "static 1" --define "with_protobuf $WORKDIR/protobuf/src/" --define "v8_includedir $WORKDIR/v8/include" --define "v8_libdir ${WORKDIR}/v8/out.gn/x64.release.sample/obj" --rebuild rpmbuild/SRPMS/${SRCRPM}
+    rpmbuild --define "_topdir ${WORKDIR}/rpmbuild" --define "dist .el${RHEL}" --define "with_mysql_source $WORKDIR/percona-server" --define "static 1" --define "with_protobuf $WORKDIR/protobuf/src/" --define "v8_includedir $WORKDIR/v8/include" --define "v8_libdir ${WORKDIR}/v8/out.gn/x64.release.sample/obj" --define "with_oci 1" --rebuild rpmbuild/SRPMS/${SRCRPM}
     return_code=$?
     if [ $return_code != 0 ]; then
         exit $return_code
@@ -536,6 +537,8 @@ build_source_deb(){
     sed -i 's|Source: mysql-shell|Source: percona-mysql-shell|' debian/control
     sed -i 's|Package: mysql-shell|Package: percona-mysql-shell|' debian/control
     sed -i 's|mysql-shell|percona-mysql-shell|' debian/changelog
+    sed -i 's|${misc:Depends},|${misc:Depends}, python2.7|' debian/control
+    sed -i '17d' debian/control
     dch -D unstable --force-distribution -v "${VERSION}-${RELEASE}-${DEB_RELEASE}" "Update to new upstream release ${VERSION}-${RELEASE}-1"
     dpkg-buildpackage -S
     cd ${WORKDIR}
@@ -590,7 +593,7 @@ build_deb(){
     sed -i '/-DCMAKE/,/j8/d' debian/rules
     cp debian/mysql-shell.install debian/install
     sed -i 's:-rm -fr debian/tmp/usr/lib*/*.{so*,a} 2>/dev/null:-rm -fr debian/tmp/usr/lib*/*.{so*,a} 2>/dev/null\n\tmv debian/tmp/usr/local/* debian/tmp/usr/\n\trm -rf debian/tmp/usr/local:' debian/rules
-    sed -i "s:VERBOSE=1:-DCMAKE_BUILD_TYPE=RelWithDebInfo -DEXTRA_INSTALL=\"\" -DEXTRA_NAME_SUFFIX=\"\" -DMYSQL_SOURCE_DIR=${WORKDIR}/percona-server -DMYSQL_BUILD_DIR=${WORKDIR}/percona-server/bld -DMYSQL_EXTRA_LIBRARIES=\"-lz -ldl -lssl -lcrypto -licui18n -licuuc -licudata \" -DWITH_PROTOBUF=${WORKDIR}/protobuf/src -DV8_INCLUDE_DIR=${WORKDIR}/v8/include -DV8_LIB_DIR=${WORKDIR}/v8/out.gn/x64.release.sample/obj -DHAVE_PYTHON=1 -DWITH_STATIC_LINKING=ON . \n\t DEB_BUILD_HARDENING=1 make -j8 VERBOSE=1:" debian/rules
+    sed -i "s:VERBOSE=1:-DCMAKE_BUILD_TYPE=RelWithDebInfo -DEXTRA_INSTALL=\"\" -DEXTRA_NAME_SUFFIX=\"\" -DMYSQL_SOURCE_DIR=${WORKDIR}/percona-server -DMYSQL_BUILD_DIR=${WORKDIR}/percona-server/bld -DMYSQL_EXTRA_LIBRARIES=\"-lz -ldl -lssl -lcrypto -licui18n -licuuc -licudata \" -DWITH_PROTOBUF=${WORKDIR}/protobuf/src -DV8_INCLUDE_DIR=${WORKDIR}/v8/include -DV8_LIB_DIR=${WORKDIR}/v8/out.gn/x64.release.sample/obj -DHAVE_PYTHON=1 -DWITH_STATIC_LINKING=ON -DWITH_OCI=1 . \n\t DEB_BUILD_HARDENING=1 make -j8 VERBOSE=1:" debian/rules
     sed -i 's:} 2>/dev/null:} 2>/dev/null\n\tmv debian/tmp/usr/local/* debian/tmp/usr/\n\trm -fr debian/tmp/usr/local:' debian/rules
     sed -i 's:, libprotobuf-dev, protobuf-compiler::' debian/control
 
@@ -676,7 +679,7 @@ ARCH=
 OS=
 PROTOBUF_REPO="https://github.com/protocolbuffers/protobuf.git"
 SHELL_REPO="https://github.com/mysql/mysql-shell.git"
-SHELL_BRANCH="8.0.15"
+SHELL_BRANCH="8.0.16"
 PROTOBUF_BRANCH=v3.6.1
 INSTALL=0
 RPM_RELEASE=1
