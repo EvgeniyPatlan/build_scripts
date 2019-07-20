@@ -139,7 +139,11 @@ get_sources(){
         patch -p0 < percona-platform-postgresql-common.templates.patch
         patch -p0 < rules_common.patch
         rm -rf control_common.patch maintscripts-functions.patch percona-platform-postgresql-common.templates.patch rules_common.patch
-        rm -rf changelog
+        sed -i 's:postgresql-common:percona-platform-postgresql-common:' percona-platform-postgresql-common.preinst
+        sed -i 's:postgresql-common:percona-platform-postgresql-common:' percona-platform-postgresql-common.postrm
+	sed -i 's:db_get postgresql-common:db_get percona-platform-postgresql-common:' percona-platform-postgresql-common.postinst
+	sed -i 's: ucfr postgresql-common:ucfr percona-platform-postgresql-common:' percona-platform-postgresql-common.postinst
+	rm -rf changelog
         echo "percona-platform-postgresql-common (${VERSION}) unstable; urgency=low" >> changelog
         echo "  * Initial Release." >> changelog
         echo " -- EvgeniyPatlan <evgeniy.patlan@percona.com> $(date -R)" >> changelog
