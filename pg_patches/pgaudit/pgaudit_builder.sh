@@ -150,8 +150,7 @@ get_sources(){
     sed -i "s:postgresql-%v:percona-platform-postgresql-%v:" debian/rules
     sed -i "s:postgresql-:percona-platform-postgresql-:g" debian/control
     sed -i "s:postgresql-:percona-platform-postgresql-:g" debian/control.in
-    sed -i 's:%v:11:g' debian/rules
-    sed -s "s:PGVERSION:11:g" debian/control.in
+    echo 11 > debian/pgversions
     rm -rf deb_packaging
     mkdir rpm
     cd rpm
@@ -206,15 +205,21 @@ install_deps() {
       mv -f percona-dev.repo /etc/yum.repos.d/
       yum clean all
       RHEL=$(rpm --eval %rhel)
-      if [ $RHEL = 7 ]; then
-          yum -y install epel-release
-          yum -y install centos-release-scl
-          yum -y install llvm-toolset-7-clang
+      if [ x"$RHEL" = x6 -o x"$RHEL" = x7 ]; then
+        until yum -y install centos-release-scl; do
+            echo "waiting"
+            sleep 1
+        done
+        yum -y install epel-release
+        INSTALL_LIST="bison e2fsprogs-devel flex gettext git glibc-devel krb5-devel libicu-devel libselinux-devel libuuid-devel libxml2-devel libxslt-devel llvm5.0-devel llvm-toolset-7-clang openldap-devel openssl-devel pam-devel patch perl perl-ExtUtils-Embed perl-ExtUtils-MakeMaker python2-devel readline-devel rpmbuild percona-platform-postgresql11-devel percona-platform-postgresql11-server percona-platform-postgresql-common percona-platform-postgresql-server-dev-all rpm-build rpmdevtools selinux-policy systemd systemd-devel systemtap-sdt-devel tcl-devel vim wget zlib-devel"
+        yum -y install ${INSTALL_LIST}
+        source /opt/rh/devtoolset-7/enable
+        source /opt/rh/llvm-toolset-7/enable
       else
-          yum -y install clang
+        INSTALL_LIST="clang-devel python3-devel perl-generators bison e2fsprogs-devel flex gettext git glibc-devel krb5-devel libicu-devel libselinux-devel libuuid-devel libxml2-devel libxslt-devel clang llvm-devel openldap-devel openssl-devel pam-devel patch perl perl-ExtUtils-MakeMaker perl-ExtUtils-Embed python2-devel readline-devel percona-platform-postgresql11-devel percona-platform-postgresql11-server percona-platform-postgresql-common percona-platform-postgresql-server-dev-all rpm-build rpmdevtools selinux-policy systemd systemd-devel systemtap-sdt-devel tcl-devel vim wget zlib-devel"
+        yum -y install ${INSTALL_LIST}
+        yum -y install binutils gcc gcc-c++
       fi
-      INSTALL_LIST="git rpm-build rpmdevtools systemd percona-platform-postgresql-common systemd-devel wget openssl-devel gcc make percona-platform-postgresql11-server percona-platform-postgresql11-devel percona-platform-postgresql-server-dev-all"
-      yum -y install ${INSTALL_LIST}
     else
       export DEBIAN=$(lsb_release -sc)
       export ARCH=$(echo $(uname -m) | sed -e 's:i686:i386:g')
@@ -222,16 +227,14 @@ install_deps() {
       add_percona_apt_repo
       LLVM_EXISTS=$(grep -c "apt.llvm.org" /etc/apt/sources.list)
       if [ ${LLVM_EXISTS} = 0 ]; then
+          wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key|sudo apt-key add -
           echo "deb http://apt.llvm.org/${DEBIAN}/ llvm-toolchain-${DEBIAN}-7 main" >> /etc/apt/sources.list
           echo "deb-src http://apt.llvm.org/${DEBIAN}/ llvm-toolchain-${DEBIAN}-7 main" >> /etc/apt/sources.list
-          apt-get update
+          apt-get --allow-unauthenticated update
       fi
       apt-get update || true
       INSTALL_LIST="build-essential debconf debhelper clang-7 devscripts dh-exec dh-systemd git wget libkrb5-dev libssl-dev percona-platform-postgresql-common percona-platform-postgresql-server-dev-all"
-      until DEBIAN_FRONTEND=noninteractive apt-get -y --allow-unauthenticated install ${INSTALL_LIST}; do
-        sleep 1
-        echo "waiting"
-      done
+      DEBIAN_FRONTEND=noninteractive apt-get -y --allow-unauthenticated install ${INSTALL_LIST}
     fi
     return;
 }
