@@ -134,11 +134,13 @@ get_sources(){
         wget https://raw.githubusercontent.com/EvgeniyPatlan/build_scripts/master/pg_patches/maintscripts-functions.patch
         wget https://raw.githubusercontent.com/EvgeniyPatlan/build_scripts/master/pg_patches/percona-platform-postgresql-common.templates.patch
         wget https://raw.githubusercontent.com/EvgeniyPatlan/build_scripts/master/pg_patches/rules_common.patch
+        wget https://raw.githubusercontent.com/EvgeniyPatlan/build_scripts/master/pg_patches/supported_versions.patch
         patch -p0 < control_common.patch
         patch -p0 < maintscripts-functions.patch
         patch -p0 < percona-platform-postgresql-common.templates.patch
         patch -p0 < rules_common.patch
-        rm -rf control_common.patch maintscripts-functions.patch percona-platform-postgresql-common.templates.patch rules_common.patch
+        patch -p0 < supported_versions.patch
+        rm -rf control_common.patch maintscripts-functions.patch percona-platform-postgresql-common.templates.patch rules_common.patch supported_versions.patch
         sed -i 's:postgresql-common:percona-platform-postgresql-common:' percona-platform-postgresql-common.preinst
         sed -i 's:postgresql-common:percona-platform-postgresql-common:' percona-platform-postgresql-common.postrm
 	sed -i 's:db_get postgresql-common:db_get percona-platform-postgresql-common:' percona-platform-postgresql-common.postinst
