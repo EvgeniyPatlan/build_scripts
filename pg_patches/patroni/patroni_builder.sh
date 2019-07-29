@@ -211,8 +211,20 @@ install_deps() {
       mv -f percona-dev.repo /etc/yum.repos.d/
       yum clean all
       RHEL=$(rpm --eval %rhel)
-      INSTALL_LIST="git wget rpm-build python-virtualenv prelink libyaml-devel gcc"
-      yum -y install ${INSTALL_LIST}
+      if [ ${RHEL} = 7 ]; then
+          INSTALL_LIST="git wget rpm-build python-virtualenv prelink libyaml-devel gcc"
+          yum -y install ${INSTALL_LIST}
+      else
+          dnf config-manager --set-enabled codeready-builder-for-rhel-8-x86_64-rpms
+          dnf clean all
+          rm -r /var/cache/dnf
+          dnf -y upgrade
+          wget https://rpmfind.net/linux/centos/7.6.1810/os/x86_64/Packages/prelink-0.5.0-9.el7.x86_64.rpm
+          INSTALL_LIST="git wget rpm-build python2-virtualenv libyaml-devel gcc"
+          yum -y install ${INSTALL_LIST}
+          yum -y install prelink-0.5.0-9.el7.x86_64.rpm
+	  ln -s /usr/bin/virtualenv-2 /usr/bin/virtualenv
+      fi
     else
       export DEBIAN=$(lsb_release -sc)
       export ARCH=$(echo $(uname -m) | sed -e 's:i686:i386:g')
