@@ -154,9 +154,11 @@ get_sources(){
     mkdir rpm
     mv all_packaging/RPM/* rpm/
     cd rpm
-    sed -i 's:potgresql-server:percona-platform-postgresql11-server:' patroni.spec
-    sed -i 's:python-psycopg2 >= 2.7.0:python-psycopg2:' patroni.spec
+    wget https://raw.githubusercontent.com/EvgeniyPatlan/build_scripts/master/pg_patches/patroni/spec.patch
     tar -czf patroni-customizations.tar.gz patroni.2.service patroni-watchdog.service postgres-telia.yml
+    patch -p0 < spec.patch
+    sed -i 's:python-psycopg2 >= 2.7.0:python-psycopg2:' patroni.spec
+    rm -rf spec.patch
     cd ../
     rm -rf all_packaging
     cd ${WORKDIR}
