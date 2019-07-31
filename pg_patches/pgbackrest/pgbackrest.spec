@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 
 Summary:        Reliable PostgreSQL Backup & Restore
-Name:           pgbackrest
+Name:           percona-pgbackrest
 Version:        %{version}
 Release:        1%{dist}
 License:        MIT
@@ -45,12 +45,12 @@ popd
 
 %install
 %{__install} -D -d -m 0755 %{buildroot}%{perl_vendorlib} %{buildroot}%{_bindir}
-%{__install} -D -d -m 0700 %{buildroot}/%{_sharedstatedir}/%{name}
-%{__install} -D -d -m 0700 %{buildroot}/var/log/%{name}
-%{__install} -D -d -m 0700 %{buildroot}/var/spool/%{name}
+%{__install} -D -d -m 0700 %{buildroot}/%{_sharedstatedir}/pgbackrest
+%{__install} -D -d -m 0700 %{buildroot}/var/log/pgbackrest
+%{__install} -D -d -m 0700 %{buildroot}/var/spool/pgbackrest
 %{__install} -D -d -m 0755 %{buildroot}%{_sysconfdir}
-%{__install} %{SOURCE1} %{buildroot}/%{_sysconfdir}/%{name}.conf
-%{__cp} -a src/%{name} %{buildroot}%{_bindir}/%{name}
+%{__install} %{SOURCE1} %{buildroot}/%{_sysconfdir}/pgbackrest.conf
+%{__cp} -a src/pgbackrest %{buildroot}%{_bindir}/pgbackrest
 
 %clean
 %{__rm} -rf %{buildroot}
@@ -62,11 +62,11 @@ popd
 %else
 %license LICENSE
 %endif
-%{_bindir}/%{name}
-%config(noreplace) %attr (644,root,root) %{_sysconfdir}/%{name}.conf
-%attr(-,postgres,postgres) /var/log/%{name}
-%attr(-,postgres,postgres) %{_sharedstatedir}/%{name}
-%attr(-,postgres,postgres) /var/spool/%{name}
+%{_bindir}/pgbackrest
+%config(noreplace) %attr (644,root,root) %{_sysconfdir}/pgbackrest.conf
+%attr(-,postgres,postgres) /var/log/pgbackrest
+%attr(-,postgres,postgres) %{_sharedstatedir}/pgbackrest
+%attr(-,postgres,postgres) /var/spool/pgbackrest
 
 %changelog
 * Tue Jul 16 2019  Evgeniy Patlan <evgeniy.patlan@percona.com> - 2.15.1

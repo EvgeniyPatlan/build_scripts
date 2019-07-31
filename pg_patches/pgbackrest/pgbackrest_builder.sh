@@ -101,7 +101,7 @@ get_sources(){
         echo "Sources will not be downloaded"
         return 0
     fi
-    PRODUCT=pgbackrest
+    PRODUCT=percona-pgbackrest
     echo "PRODUCT=${PRODUCT}" > pgbackrest.properties
 
     PRODUCT_FULL=${PRODUCT}-${VERSION}
@@ -129,7 +129,15 @@ get_sources(){
 
     git clone https://salsa.debian.org/postgresql/pgbackrest.git deb_packaging
     mv deb_packaging/debian ./
+    cd debian/
+    for file in $(ls | grep ^pgbackrest | grep -v pgbackrest.conf); do
+        mv $file "percona-$file"
+    done
+    cd ../
     sed -i "s:postgresql-common:percona-postgresql-common:" debian/control
+    sed -i "s|Source: pgbackrest|Source: percona-pgbackrest|" debian/control
+    sed -i "s|Package: pgbackrest|Package: percona-pgbackrest|g" debian/control
+    sed -i "s|Upstream-Name: pgbackrest|Upstream-Name: percona-pgbackrest|" debian/copyright
     rm -rf deb_packaging
     mkdir rpm
     cd rpm
@@ -147,7 +155,7 @@ get_sources(){
     cp ${PRODUCT_FULL}.tar.gz $WORKDIR/source_tarball
     cp ${PRODUCT_FULL}.tar.gz $CURDIR/source_tarball
     cd $CURDIR
-    rm -rf pgbackrest*
+    rm -rf percona-pgbackrest*
     return
 }
 
@@ -204,10 +212,10 @@ install_deps() {
 
 get_tar(){
     TARBALL=$1
-    TARFILE=$(basename $(find $WORKDIR/$TARBALL -name 'pgbackrest*.tar.gz' | sort | tail -n1))
+    TARFILE=$(basename $(find $WORKDIR/$TARBALL -name 'percona-pgbackrest*.tar.gz' | sort | tail -n1))
     if [ -z $TARFILE ]
     then
-        TARFILE=$(basename $(find $CURDIR/$TARBALL -name 'pgbackrest*.tar.gz' | sort | tail -n1))
+        TARFILE=$(basename $(find $CURDIR/$TARBALL -name 'percona-pgbackrest*.tar.gz' | sort | tail -n1))
         if [ -z $TARFILE ]
         then
             echo "There is no $TARBALL for build"
@@ -224,10 +232,10 @@ get_tar(){
 get_deb_sources(){
     param=$1
     echo $param
-    FILE=$(basename $(find $WORKDIR/source_deb -name "pgbackrest*.$param" | sort | tail -n1))
+    FILE=$(basename $(find $WORKDIR/source_deb -name "percona-pgbackrest*.$param" | sort | tail -n1))
     if [ -z $FILE ]
     then
-        FILE=$(basename $(find $CURDIR/source_deb -name "pgbackrest*.$param" | sort | tail -n1))
+        FILE=$(basename $(find $CURDIR/source_deb -name "percona-pgbackrest*.$param" | sort | tail -n1))
         if [ -z $FILE ]
         then
             echo "There is no sources for build"
@@ -256,7 +264,7 @@ build_srpm(){
     get_tar "source_tarball"
     rm -fr rpmbuild
     ls | grep -v tar.gz | xargs rm -rf
-    TARFILE=$(find . -name 'pgbackrest*.tar.gz' | sort | tail -n1)
+    TARFILE=$(find . -name 'percona-pgbackrest*.tar.gz' | sort | tail -n1)
     SRC_DIR=${TARFILE%.tar.gz}
     #
     mkdir -vp rpmbuild/{SOURCES,SPECS,BUILD,SRPMS,RPMS}
@@ -286,10 +294,10 @@ build_rpm(){
         echo "It is not possible to build rpm here"
         exit 1
     fi
-    SRC_RPM=$(basename $(find $WORKDIR/srpm -name 'pgbackrest*.src.rpm' | sort | tail -n1))
+    SRC_RPM=$(basename $(find $WORKDIR/srpm -name 'percona-pgbackrest*.src.rpm' | sort | tail -n1))
     if [ -z $SRC_RPM ]
     then
-        SRC_RPM=$(basename $(find $CURDIR/srpm -name 'pgbackrest*.src.rpm' | sort | tail -n1))
+        SRC_RPM=$(basename $(find $CURDIR/srpm -name 'percona-pgbackrest*.src.rpm' | sort | tail -n1))
         if [ -z $SRC_RPM ]
         then
             echo "There is no src rpm for build"
@@ -338,11 +346,11 @@ build_source_deb(){
         echo "It is not possible to build source deb here"
         exit 1
     fi
-    rm -rf pgbackrest*
+    rm -rf percona-pgbackrest*
     get_tar "source_tarball"
     rm -f *.dsc *.orig.tar.gz *.debian.tar.gz *.changes
     #
-    TARFILE=$(basename $(find . -name 'pgbackrest*.tar.gz' | sort | tail -n1))
+    TARFILE=$(basename $(find . -name 'percona-pgbackrest*.tar.gz' | sort | tail -n1))
     DEBIAN=$(lsb_release -sc)
     ARCH=$(echo $(uname -m) | sed -e 's:i686:i386:g')
     tar zxf ${TARFILE}
@@ -354,7 +362,7 @@ build_source_deb(){
 
     cd debian
     rm -rf changelog
-    echo "pgbackrest (${VERSION}-${RELEASE}) unstable; urgency=low" >> changelog
+    echo "percona-pgbackrest (${VERSION}-${RELEASE}) unstable; urgency=low" >> changelog
     echo "  * Initial Release." >> changelog
     echo " -- EvgeniyPatlan <evgeniy.patlan@percona.com> $(date -R)" >> changelog
 
@@ -433,7 +441,7 @@ DEB_RELEASE=1
 REVISION=0
 BRANCH="release/2.15.1"
 REPO="https://github.com/pgbackrest/pgbackrest.git"
-PRODUCT=pgbackrest
+PRODUCT=percona-pgbackrest
 DEBUG=0
 parse_arguments PICK-ARGS-FROM-ARGV "$@"
 VERSION='2.15.1'
