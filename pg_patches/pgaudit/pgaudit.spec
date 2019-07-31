@@ -1,6 +1,6 @@
 %define pginstdir /usr/pgsql-11/
 
-Name:           pgaudit
+Name:           percona-pgaudit
 Version:        1.3.0
 Release:        2%{?dist}
 Summary:        PostgreSQL Audit Extension
@@ -45,19 +45,19 @@ sed -i 's:PG_CONFIG = pg_config:PG_CONFIG = /usr/pgsql-11/bin/pg_config:' Makefi
 %{__make}  USE_PGXS=1 %{?_smp_mflags} DESTDIR=%{buildroot} install
 # Install README and howto file under PostgreSQL installation directory:
 %{__install} -d %{buildroot}%{pginstdir}/doc/extension
-%{__install} -m 644 README.md %{buildroot}%{pginstdir}/doc/extension/README-%{name}.md
+%{__install} -m 644 README.md %{buildroot}%{pginstdir}/doc/extension/README-pgaudit.md
 %{__rm} -f %{buildroot}%{pginstdir}/doc/extension/README.md
 
 
 
 %files
 %defattr(-,root,root,-)
-%doc %{pginstdir}/doc/extension/README-%{name}.md
-%{pginstdir}/lib/%{name}.so
+%doc %{pginstdir}/doc/extension/README-pgaudit.md
+%{pginstdir}/lib/pgaudit.so
 %{pginstdir}/share/extension/pgaudit--1.3*.sql
-%{pginstdir}/lib/bitcode/%{name}*.bc
-%{pginstdir}/lib/bitcode/%{name}/%{name}*.bc
-%{pginstdir}/share/extension/%{name}.control
+%{pginstdir}/lib/bitcode/pgaudit*.bc
+%{pginstdir}/lib/bitcode/pgaudit/pgaudit*.bc
+%{pginstdir}/share/extension/pgaudit.control
 
 
 %changelog

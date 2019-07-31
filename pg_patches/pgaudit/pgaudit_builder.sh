@@ -119,7 +119,7 @@ get_sources(){
         echo "Sources will not be downloaded"
         return 0
     fi
-    PRODUCT=pgaudit
+    PRODUCT=percona-pgaudit
     echo "PRODUCT=${PRODUCT}" > pgaudit.properties
 
     PRODUCT_FULL=${PRODUCT}-${VERSION}
@@ -149,6 +149,9 @@ get_sources(){
     mv deb_packaging/debian ./
     sed -i "s:postgresql-%v:percona-postgresql-%v:" debian/rules
     sed -i "s:postgresql-:percona-postgresql-:g" debian/control
+    sed -i "s|Source: pgaudit|Source: percona-pgaudit|" debian/control
+    sed -i "s|Source: pgaudit|Source: percona-pgaudit|" debian/control.in
+    sed -i "s|Upstream-Name: pgaudit|Upstream-Name: percona-pgaudit|" debian/copyright
     sed -i "s:postgresql-:percona-postgresql-:g" debian/control.in
     echo 11 > debian/pgversions
     rm -rf deb_packaging
@@ -241,10 +244,10 @@ install_deps() {
 
 get_tar(){
     TARBALL=$1
-    TARFILE=$(basename $(find $WORKDIR/$TARBALL -name 'pgaudit*.tar.gz' | sort | tail -n1))
+    TARFILE=$(basename $(find $WORKDIR/$TARBALL -name 'percona-pgaudit*.tar.gz' | sort | tail -n1))
     if [ -z $TARFILE ]
     then
-        TARFILE=$(basename $(find $CURDIR/$TARBALL -name 'pgaudit*.tar.gz' | sort | tail -n1))
+        TARFILE=$(basename $(find $CURDIR/$TARBALL -name 'percona-pgaudit*.tar.gz' | sort | tail -n1))
         if [ -z $TARFILE ]
         then
             echo "There is no $TARBALL for build"
@@ -261,10 +264,10 @@ get_tar(){
 get_deb_sources(){
     param=$1
     echo $param
-    FILE=$(basename $(find $WORKDIR/source_deb -name "pgaudit*.$param" | sort | tail -n1))
+    FILE=$(basename $(find $WORKDIR/source_deb -name "percona-pgaudit*.$param" | sort | tail -n1))
     if [ -z $FILE ]
     then
-        FILE=$(basename $(find $CURDIR/source_deb -name "pgaudit*.$param" | sort | tail -n1))
+        FILE=$(basename $(find $CURDIR/source_deb -name "percona-pgaudit*.$param" | sort | tail -n1))
         if [ -z $FILE ]
         then
             echo "There is no sources for build"
@@ -293,7 +296,7 @@ build_srpm(){
     get_tar "source_tarball"
     rm -fr rpmbuild
     ls | grep -v tar.gz | xargs rm -rf
-    TARFILE=$(find . -name 'pgaudit*.tar.gz' | sort | tail -n1)
+    TARFILE=$(find . -name 'percona-pgaudit*.tar.gz' | sort | tail -n1)
     SRC_DIR=${TARFILE%.tar.gz}
     #
     mkdir -vp rpmbuild/{SOURCES,SPECS,BUILD,SRPMS,RPMS}
@@ -323,10 +326,10 @@ build_rpm(){
         echo "It is not possible to build rpm here"
         exit 1
     fi
-    SRC_RPM=$(basename $(find $WORKDIR/srpm -name 'pgaudit*.src.rpm' | sort | tail -n1))
+    SRC_RPM=$(basename $(find $WORKDIR/srpm -name 'percona-pgaudit*.src.rpm' | sort | tail -n1))
     if [ -z $SRC_RPM ]
     then
-        SRC_RPM=$(basename $(find $CURDIR/srpm -name 'pgaudit*.src.rpm' | sort | tail -n1))
+        SRC_RPM=$(basename $(find $CURDIR/srpm -name 'percona-pgaudit*.src.rpm' | sort | tail -n1))
         if [ -z $SRC_RPM ]
         then
             echo "There is no src rpm for build"
@@ -375,11 +378,11 @@ build_source_deb(){
         echo "It is not possible to build source deb here"
         exit 1
     fi
-    rm -rf pgaudit*
+    rm -rf percona-pgaudit*
     get_tar "source_tarball"
     rm -f *.dsc *.orig.tar.gz *.debian.tar.gz *.changes
     #
-    TARFILE=$(basename $(find . -name 'pgaudit*.tar.gz' | sort | tail -n1))
+    TARFILE=$(basename $(find . -name 'percona-pgaudit*.tar.gz' | sort | tail -n1))
     DEBIAN=$(lsb_release -sc)
     ARCH=$(echo $(uname -m) | sed -e 's:i686:i386:g')
     tar zxf ${TARFILE}
@@ -391,7 +394,7 @@ build_source_deb(){
 
     cd debian
     rm -rf changelog
-    echo "pgaudit (${VERSION}-${RELEASE}) unstable; urgency=low" >> changelog
+    echo "percona-pgaudit (${VERSION}-${RELEASE}) unstable; urgency=low" >> changelog
     echo "  * Initial Release." >> changelog
     echo " -- EvgeniyPatlan <evgeniy.patlan@percona.com> $(date -R)" >> changelog
 
@@ -470,7 +473,7 @@ DEB_RELEASE=1
 REVISION=0
 BRANCH="REL_11_STABLE"
 REPO="https://github.com/pgaudit/pgaudit.git"
-PRODUCT=pgaudit
+PRODUCT=percona-pgaudit
 DEBUG=0
 parse_arguments PICK-ARGS-FROM-ARGV "$@"
 VERSION='1.3.0'
