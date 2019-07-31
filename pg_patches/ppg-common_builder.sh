@@ -101,14 +101,14 @@ get_sources(){
         echo "Sources will not be downloaded"
         return 0
     fi
-    PRODUCT=percona-platform-postgresql-common
-    echo "PRODUCT=${PRODUCT}" > percona-platform-postgresql.properties
+    PRODUCT=percona-postgresql-common
+    echo "PRODUCT=${PRODUCT}" > percona-postgresql.properties
 
     PRODUCT_FULL=${PRODUCT}-${VERSION}
-    echo "PRODUCT_FULL=${PRODUCT_FULL}" >> percona-platform-postgresql.properties
-    echo "VERSION=${VERSION}" >> percona-platform-postgresql.properties
-    echo "BUILD_NUMBER=${BUILD_NUMBER}" >> percona-platform-postgresql.properties
-    echo "BUILD_ID=${BUILD_ID}" >> percona-platform-postgresql.properties
+    echo "PRODUCT_FULL=${PRODUCT_FULL}" >> percona-postgresql.properties
+    echo "VERSION=${VERSION}" >> percona-postgresql.properties
+    echo "BUILD_NUMBER=${BUILD_NUMBER}" >> percona-postgresql.properties
+    echo "BUILD_ID=${BUILD_ID}" >> percona-postgresql.properties
     git clone "$REPO"
     retval=$?
     if [ $retval != 0 ]
@@ -125,52 +125,52 @@ get_sources(){
         git checkout "$BRANCH"
     fi
     REVISION=$(git rev-parse --short HEAD)
-    echo "REVISION=${REVISION}" >> ${WORKDIR}/percona-platform-postgresql.properties
+    echo "REVISION=${REVISION}" >> ${WORKDIR}/percona-postgresql.properties
     cd debian
         for file in $(ls | grep ^postgresql); do 
-            mv $file "percona-platform-$file"
+            mv $file "percona-$file"
         done
         wget https://raw.githubusercontent.com/EvgeniyPatlan/build_scripts/master/pg_patches/control_common.patch
         wget https://raw.githubusercontent.com/EvgeniyPatlan/build_scripts/master/pg_patches/maintscripts-functions.patch
-        wget https://raw.githubusercontent.com/EvgeniyPatlan/build_scripts/master/pg_patches/percona-platform-postgresql-common.templates.patch
+        wget https://raw.githubusercontent.com/EvgeniyPatlan/build_scripts/master/pg_patches/percona-postgresql-common.templates.patch
         wget https://raw.githubusercontent.com/EvgeniyPatlan/build_scripts/master/pg_patches/rules_common.patch
         wget https://raw.githubusercontent.com/EvgeniyPatlan/build_scripts/master/pg_patches/supported_versions.patch
         patch -p0 < control_common.patch
         patch -p0 < maintscripts-functions.patch
-        patch -p0 < percona-platform-postgresql-common.templates.patch
+        patch -p0 < percona-postgresql-common.templates.patch
         patch -p0 < rules_common.patch
         patch -p0 < supported_versions.patch
-        rm -rf control_common.patch maintscripts-functions.patch percona-platform-postgresql-common.templates.patch rules_common.patch supported_versions.patch
-        sed -i 's:postgresql-common:percona-platform-postgresql-common:' percona-platform-postgresql-common.preinst
-        sed -i 's:postgresql-common:percona-platform-postgresql-common:' percona-platform-postgresql-common.postrm
-	sed -i 's:db_get postgresql-common:db_get percona-platform-postgresql-common:' percona-platform-postgresql-common.postinst
-	sed -i 's: ucfr postgresql-common:ucfr percona-platform-postgresql-common:' percona-platform-postgresql-common.postinst
+        rm -rf control_common.patch maintscripts-functions.patch percona-postgresql-common.templates.patch rules_common.patch supported_versions.patch
+        sed -i 's:postgresql-common:percona-postgresql-common:' percona-postgresql-common.preinst
+        sed -i 's:postgresql-common:percona-postgresql-common:' percona-postgresql-common.postrm
+	sed -i 's:db_get postgresql-common:db_get percona-postgresql-common:' percona-postgresql-common.postinst
+	sed -i 's: ucfr postgresql-common:ucfr percona-postgresql-common:' percona-postgresql-common.postinst
 	rm -rf changelog
-        echo "percona-platform-postgresql-common (${VERSION}) unstable; urgency=low" >> changelog
+        echo "percona-postgresql-common (${VERSION}) unstable; urgency=low" >> changelog
         echo "  * Initial Release." >> changelog
         echo " -- EvgeniyPatlan <evgeniy.patlan@percona.com> $(date -R)" >> changelog
     cd ../
     cd rpm
         for file in $(ls | grep postgresql); do
-            mv $file "percona-platform-$file"
+            mv $file "percona-$file"
         done
-        wget https://raw.githubusercontent.com/EvgeniyPatlan/build_scripts/master/pg_patches/percona-platform-postgresql-common.spec.patch
-        patch -p0 < percona-platform-postgresql-common.spec.patch
-        rm -rf percona-platform-postgresql-common.spec.patch
+        wget https://raw.githubusercontent.com/EvgeniyPatlan/build_scripts/master/pg_patches/percona-postgresql-common.spec.patch
+        patch -p0 < percona-postgresql-common.spec.patch
+        rm -rf percona-postgresql-common.spec.patch
     cd ../
     cd ${WORKDIR}
     #
-    source percona-platform-postgresql.properties
+    source percona-postgresql.properties
     #
 
     tar --owner=0 --group=0 --exclude=.* -czf ${PRODUCT_FULL}.tar.gz ${PRODUCT_FULL}
-    echo "UPLOAD=UPLOAD/experimental/BUILDS/${PRODUCT}-11/${PRODUCT_FULL}/${BRANCH}/${REVISION}/${BUILD_ID}" >> percona-platform-postgresql.properties
+    echo "UPLOAD=UPLOAD/experimental/BUILDS/${PRODUCT}-11/${PRODUCT_FULL}/${BRANCH}/${REVISION}/${BUILD_ID}" >> percona-postgresql.properties
     mkdir $WORKDIR/source_tarball
     mkdir $CURDIR/source_tarball
     cp ${PRODUCT_FULL}.tar.gz $WORKDIR/source_tarball
     cp ${PRODUCT_FULL}.tar.gz $CURDIR/source_tarball
     cd $CURDIR
-    rm -rf percona-platform-postgresql*
+    rm -rf percona-postgresql*
     return
 }
 
@@ -228,10 +228,10 @@ install_deps() {
 
 get_tar(){
     TARBALL=$1
-    TARFILE=$(basename $(find $WORKDIR/$TARBALL -name 'percona-platform-postgresql-common*.tar.gz' | sort | tail -n1))
+    TARFILE=$(basename $(find $WORKDIR/$TARBALL -name 'percona-postgresql-common*.tar.gz' | sort | tail -n1))
     if [ -z $TARFILE ]
     then
-        TARFILE=$(basename $(find $CURDIR/$TARBALL -name 'percona-platform-postgresql-common*.tar.gz' | sort | tail -n1))
+        TARFILE=$(basename $(find $CURDIR/$TARBALL -name 'percona-postgresql-common*.tar.gz' | sort | tail -n1))
         if [ -z $TARFILE ]
         then
             echo "There is no $TARBALL for build"
@@ -248,10 +248,10 @@ get_tar(){
 get_deb_sources(){
     param=$1
     echo $param
-    FILE=$(basename $(find $WORKDIR/source_deb -name "percona-platform-postgresql*$param" | sort | tail -n1))
+    FILE=$(basename $(find $WORKDIR/source_deb -name "percona-postgresql*$param" | sort | tail -n1))
     if [ -z $FILE ]
     then
-        FILE=$(basename $(find $CURDIR/source_deb -name "percona-platform-postgresql*$param" | sort | tail -n1))
+        FILE=$(basename $(find $CURDIR/source_deb -name "percona-postgresql*$param" | sort | tail -n1))
         if [ -z $FILE ]
         then
             echo "There is no sources for build"
@@ -280,7 +280,7 @@ build_srpm(){
     get_tar "source_tarball"
     rm -fr rpmbuild
     ls | grep -v tar.gz | xargs rm -rf
-    TARFILE=$(find . -name 'percona-platform-postgresql*.tar.gz' | sort | tail -n1)
+    TARFILE=$(find . -name 'percona-postgresql*.tar.gz' | sort | tail -n1)
     SRC_DIR=${TARFILE%.tar.gz}
     #
     mkdir -vp rpmbuild/{SOURCES,SPECS,BUILD,SRPMS,RPMS}
@@ -293,7 +293,7 @@ build_srpm(){
     #
     mv -fv ${TARFILE} ${WORKDIR}/rpmbuild/SOURCES
     rpmbuild -bs --define "_topdir ${WORKDIR}/rpmbuild" --define "dist .generic" --define "version ${VERSION}"\
-        rpmbuild/SPECS/percona-platform-postgresql-common.spec
+        rpmbuild/SPECS/percona-postgresql-common.spec
     mkdir -p ${WORKDIR}/srpm
     mkdir -p ${CURDIR}/srpm
     cp rpmbuild/SRPMS/*.src.rpm ${CURDIR}/srpm
@@ -312,10 +312,10 @@ build_rpm(){
         echo "It is not possible to build rpm here"
         exit 1
     fi
-    SRC_RPM=$(basename $(find $WORKDIR/srpm -name 'percona-platform-postgresql-common*.src.rpm' | sort | tail -n1))
+    SRC_RPM=$(basename $(find $WORKDIR/srpm -name 'percona-postgresql-common*.src.rpm' | sort | tail -n1))
     if [ -z $SRC_RPM ]
     then
-        SRC_RPM=$(basename $(find $CURDIR/srpm -name 'percona-platform-postgresql-common*.src.rpm' | sort | tail -n1))
+        SRC_RPM=$(basename $(find $CURDIR/srpm -name 'percona-postgresql-common*.src.rpm' | sort | tail -n1))
         if [ -z $SRC_RPM ]
         then
             echo "There is no src rpm for build"
@@ -360,11 +360,11 @@ build_source_deb(){
         echo "It is not possible to build source deb here"
         exit 1
     fi
-    rm -rf percona-platform-postgresql-common*
+    rm -rf percona-postgresql-common*
     rm -f *.dsc *.orig.tar.gz *.tar.* *.changes
     get_tar "source_tarball"
     #
-    TARFILE=$(basename $(find . -name 'percona-platform-postgresql-common*.tar.gz' | sort | tail -n1))
+    TARFILE=$(basename $(find . -name 'percona-postgresql-common*.tar.gz' | sort | tail -n1))
     DEBIAN=$(lsb_release -sc)
     ARCH=$(echo $(uname -m) | sed -e 's:i686:i386:g')
     tar zxf ${TARFILE}
@@ -410,8 +410,8 @@ build_deb(){
     export DEBIAN=$(lsb_release -sc)
     export ARCH=$(echo $(uname -m) | sed -e 's:i686:i386:g')
     #
-    echo "DEBIAN=${DEBIAN}" >> percona-platform-postgresql.properties
-    echo "ARCH=${ARCH}" >> percona-platform-postgresql.properties
+    echo "DEBIAN=${DEBIAN}" >> percona-postgresql.properties
+    echo "ARCH=${ARCH}" >> percona-postgresql.properties
 
     #
     DSC=$(basename $(find . -name '*.dsc' | sort | tail -n1))
@@ -447,7 +447,7 @@ DEB_RELEASE=1
 REVISION=0
 BRANCH="202"
 REPO="https://salsa.debian.org/postgresql/postgresql-common.git"
-PRODUCT=percona-platform-postgresql
+PRODUCT=percona-postgresql
 DEBUG=0
 parse_arguments PICK-ARGS-FROM-ARGV "$@"
 VERSION='202'

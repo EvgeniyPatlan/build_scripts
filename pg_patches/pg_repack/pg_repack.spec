@@ -15,8 +15,8 @@ Patch0:         pg_repack-pg%{pgmajorversion}-makefile-pgxs.patch
 URL:            https://pgxn.org/dist/pg_repack/
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-%(%{__id_u} -n)
 
-BuildRequires:  percona-platform-postgresql%{pgmajorversion}-devel, percona-platform-postgresql%{pgmajorversion}
-Requires:       percona-platform-postgresql%{pgmajorversion}
+BuildRequires:  percona-postgresql%{pgmajorversion}-devel, percona-postgresql%{pgmajorversion}
+Requires:       percona-postgresql%{pgmajorversion}
 
 
 %description

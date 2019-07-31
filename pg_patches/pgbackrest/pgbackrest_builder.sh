@@ -129,7 +129,7 @@ get_sources(){
 
     git clone https://salsa.debian.org/postgresql/pgbackrest.git deb_packaging
     mv deb_packaging/debian ./
-    sed -i "s:postgresql-common:percona-platform-postgresql-common:" debian/control
+    sed -i "s:postgresql-common:percona-postgresql-common:" debian/control
     rm -rf deb_packaging
     mkdir rpm
     cd rpm

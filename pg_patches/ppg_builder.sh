@@ -101,14 +101,14 @@ get_sources(){
         echo "Sources will not be downloaded"
         return 0
     fi
-    PRODUCT=percona-platform-postgresql
-    echo "PRODUCT=${PRODUCT}" > percona-platform-postgresql.properties
+    PRODUCT=percona-postgresql
+    echo "PRODUCT=${PRODUCT}" > percona-postgresql.properties
 
     PRODUCT_FULL=${PRODUCT}-${VERSION}.${RELEASE}
-    echo "PRODUCT_FULL=${PRODUCT_FULL}" >> percona-platform-postgresql.properties
-    echo "VERSION=${PSM_VER}" >> percona-platform-postgresql.properties
-    echo "BUILD_NUMBER=${BUILD_NUMBER}" >> percona-platform-postgresql.properties
-    echo "BUILD_ID=${BUILD_ID}" >> percona-platform-postgresql.properties
+    echo "PRODUCT_FULL=${PRODUCT_FULL}" >> percona-postgresql.properties
+    echo "VERSION=${PSM_VER}" >> percona-postgresql.properties
+    echo "BUILD_NUMBER=${BUILD_NUMBER}" >> percona-postgresql.properties
+    echo "BUILD_ID=${BUILD_ID}" >> percona-postgresql.properties
     git clone "$REPO"
     retval=$?
     if [ $retval != 0 ]
@@ -125,19 +125,19 @@ get_sources(){
         git checkout "$BRANCH"
     fi
     REVISION=$(git rev-parse --short HEAD)
-    echo "REVISION=${REVISION}" >> ${WORKDIR}/percona-platform-postgresql.properties
+    echo "REVISION=${REVISION}" >> ${WORKDIR}/percona-postgresql.properties
     rm -fr debian rpm
 
     git clone https://salsa.debian.org/postgresql/postgresql.git deb_packaging
     mv deb_packaging/debian ./
     rm -rf deb_packaging
     cd debian
-    rename 's/postgresql/percona-platform-postgresql/g' *
+    rename 's/postgresql/percona-postgresql/g' *
     wget https://raw.githubusercontent.com/EvgeniyPatlan/build_scripts/master/pg_patches/control.patch
     wget https://raw.githubusercontent.com/EvgeniyPatlan/build_scripts/master/pg_patches/rules.patch
     patch -p0 < control.patch
     patch -p0 < rules.patch
-    sed -i 's/postgresql-11/percona-platform-postgresql-11/' percona-platform-postgresql-11.templates
+    sed -i 's/postgresql-11/percona-postgresql-11/' percona-postgresql-11.templates
     rm -rf control.patch rules.patch
     cd ../
     git clone https://git.postgresql.org/git/pgrpms.git
@@ -146,23 +146,23 @@ get_sources(){
     rm -rf pgrpms
     cd rpm
         for file in $(ls | grep postgresql); do
-            mv $file "percona-platform-$file"
+            mv $file "percona-$file"
         done
     cd ../
-    sed -i 's/sname postgresql/sname percona-platform-postgresql/' rpm/percona-platform-postgresql-11.spec
+    sed -i 's/sname postgresql/sname percona-postgresql/' rpm/percona-postgresql-11.spec
     cd ${WORKDIR}
     #
-    source percona-platform-postgresql.properties
+    source percona-postgresql.properties
     #
 
     tar --owner=0 --group=0 --exclude=.* -czf ${PRODUCT_FULL}.tar.gz ${PRODUCT_FULL}
-    echo "UPLOAD=UPLOAD/experimental/BUILDS/${PRODUCT}-11/${PRODUCT_FULL}/${PSM_BRANCH}/${REVISION}/${BUILD_ID}" >> percona-platform-postgresql.properties
+    echo "UPLOAD=UPLOAD/experimental/BUILDS/${PRODUCT}-11/${PRODUCT_FULL}/${PSM_BRANCH}/${REVISION}/${BUILD_ID}" >> percona-postgresql.properties
     mkdir $WORKDIR/source_tarball
     mkdir $CURDIR/source_tarball
     cp ${PRODUCT_FULL}.tar.gz $WORKDIR/source_tarball
     cp ${PRODUCT_FULL}.tar.gz $CURDIR/source_tarball
     cd $CURDIR
-    rm -rf percona-platform-postgresql*
+    rm -rf percona-postgresql*
     return
 }
 
@@ -242,10 +242,10 @@ install_deps() {
 
 get_tar(){
     TARBALL=$1
-    TARFILE=$(basename $(find $WORKDIR/$TARBALL -name 'percona-platform-postgresql*.tar.gz' | sort | tail -n1))
+    TARFILE=$(basename $(find $WORKDIR/$TARBALL -name 'percona-postgresql*.tar.gz' | sort | tail -n1))
     if [ -z $TARFILE ]
     then
-        TARFILE=$(basename $(find $CURDIR/$TARBALL -name 'percona-platform-postgresql*.tar.gz' | sort | tail -n1))
+        TARFILE=$(basename $(find $CURDIR/$TARBALL -name 'percona-postgresql*.tar.gz' | sort | tail -n1))
         if [ -z $TARFILE ]
         then
             echo "There is no $TARBALL for build"
@@ -262,10 +262,10 @@ get_tar(){
 get_deb_sources(){
     param=$1
     echo $param
-    FILE=$(basename $(find $WORKDIR/source_deb -name "percona-platform-postgresql*.$param" | sort | tail -n1))
+    FILE=$(basename $(find $WORKDIR/source_deb -name "percona-postgresql*.$param" | sort | tail -n1))
     if [ -z $FILE ]
     then
-        FILE=$(basename $(find $CURDIR/source_deb -name "percona-platform-postgresql*.$param" | sort | tail -n1))
+        FILE=$(basename $(find $CURDIR/source_deb -name "percona-postgresql*.$param" | sort | tail -n1))
         if [ -z $FILE ]
         then
             echo "There is no sources for build"
@@ -294,7 +294,7 @@ build_srpm(){
     get_tar "source_tarball"
     rm -fr rpmbuild
     ls | grep -v tar.gz | xargs rm -rf
-    TARFILE=$(find . -name 'percona-platform-postgresql*.tar.gz' | sort | tail -n1)
+    TARFILE=$(find . -name 'percona-postgresql*.tar.gz' | sort | tail -n1)
     SRC_DIR=${TARFILE%.tar.gz}
     #
     mkdir -vp rpmbuild/{SOURCES,SPECS,BUILD,SRPMS,RPMS}
@@ -303,25 +303,25 @@ build_srpm(){
     cp -av rpm/* rpmbuild/SOURCES
     cd rpmbuild/SOURCES
     wget https://www.postgresql.org/files/documentation/pdf/11/postgresql-11-A4.pdf
-    mv postgresql-11-A4.pdf percona-platform-postgresql-11-A4.pdf
+    mv postgresql-11-A4.pdf percona-postgresql-11-A4.pdf
     cd ../../
-    cp -av rpmbuild/SOURCES/percona-platform-postgresql-11.spec rpmbuild/SPECS
+    cp -av rpmbuild/SOURCES/percona-postgresql-11.spec rpmbuild/SPECS
     #
     mv -fv ${TARFILE} ${WORKDIR}/rpmbuild/SOURCES
-    sed -i 's|Source0.*|Source0:        %{sname}-%{version}.tar.gz|' rpmbuild/SPECS/percona-platform-postgresql-11.spec
-    sed -i 's:PGDG::' rpmbuild/SPECS/percona-platform-postgresql-11.spec
-    sed -i 's:/bin/postgresql:/bin/%{sname}:' rpmbuild/SPECS/percona-platform-postgresql-11.spec
-    sed -i 's:/bin/postgresql:/bin/percona-platform-postgresql:' rpmbuild/SOURCES/percona-platform-postgresql-11.service
-    sed -i 's:postgresql-$PGMAJORVERSION:percona-platform-postgresql-$PGMAJORVERSION:' rpmbuild/SOURCES/percona-platform-postgresql-11-setup
-    sed -i 's:pre postgresql:pre %{sname}:' rpmbuild/SPECS/percona-platform-postgresql-11.spec
-    sed -i 's:%install:pushd doc/src; make all; popd\n %install:' rpmbuild/SPECS/percona-platform-postgresql-11.spec
+    sed -i 's|Source0.*|Source0:        %{sname}-%{version}.tar.gz|' rpmbuild/SPECS/percona-postgresql-11.spec
+    sed -i 's:PGDG::' rpmbuild/SPECS/percona-postgresql-11.spec
+    sed -i 's:/bin/postgresql:/bin/%{sname}:' rpmbuild/SPECS/percona-postgresql-11.spec
+    sed -i 's:/bin/postgresql:/bin/percona-postgresql:' rpmbuild/SOURCES/percona-postgresql-11.service
+    sed -i 's:postgresql-$PGMAJORVERSION:percona-postgresql-$PGMAJORVERSION:' rpmbuild/SOURCES/percona-postgresql-11-setup
+    sed -i 's:pre postgresql:pre %{sname}:' rpmbuild/SPECS/percona-postgresql-11.spec
+    sed -i 's:%install:pushd doc/src; make all; popd\n %install:' rpmbuild/SPECS/percona-postgresql-11.spec
     if [ -f /opt/rh/devtoolset-7/enable ]; then
         source /opt/rh/devtoolset-7/enable
         source /opt/rh/llvm-toolset-7/enable
     fi
     rpmbuild -bs --define "_topdir ${WORKDIR}/rpmbuild" --define "dist .generic" \
         --define "pgmajorversion 11" --define "pginstdir /usr/pgsql-11"  --define "pgpackageversion 11" \
-        rpmbuild/SPECS/percona-platform-postgresql-11.spec
+        rpmbuild/SPECS/percona-postgresql-11.spec
     mkdir -p ${WORKDIR}/srpm
     mkdir -p ${CURDIR}/srpm
     cp rpmbuild/SRPMS/*.src.rpm ${CURDIR}/srpm
@@ -340,10 +340,10 @@ build_rpm(){
         echo "It is not possible to build rpm here"
         exit 1
     fi
-    SRC_RPM=$(basename $(find $WORKDIR/srpm -name 'percona-platform-postgresql*.src.rpm' | sort | tail -n1))
+    SRC_RPM=$(basename $(find $WORKDIR/srpm -name 'percona-postgresql*.src.rpm' | sort | tail -n1))
     if [ -z $SRC_RPM ]
     then
-        SRC_RPM=$(basename $(find $CURDIR/srpm -name 'percona-platform-postgresql*.src.rpm' | sort | tail -n1))
+        SRC_RPM=$(basename $(find $CURDIR/srpm -name 'percona-postgresql*.src.rpm' | sort | tail -n1))
         if [ -z $SRC_RPM ]
         then
             echo "There is no src rpm for build"
@@ -392,11 +392,11 @@ build_source_deb(){
         echo "It is not possible to build source deb here"
         exit 1
     fi
-    rm -rf percona-platform-postgresql*
+    rm -rf percona-postgresql*
     get_tar "source_tarball"
     rm -f *.dsc *.orig.tar.gz *.debian.tar.gz *.changes
     #
-    TARFILE=$(basename $(find . -name 'percona-platform-postgresql*.tar.gz' | sort | tail -n1))
+    TARFILE=$(basename $(find . -name 'percona-postgresql*.tar.gz' | sort | tail -n1))
     DEBIAN=$(lsb_release -sc)
     ARCH=$(echo $(uname -m) | sed -e 's:i686:i386:g')
     tar zxf ${TARFILE}
@@ -408,7 +408,7 @@ build_source_deb(){
 
     cd debian
     rm -rf changelog
-    echo "percona-platform-postgresql-11 (${VERSION}-${RELEASE}) unstable; urgency=low" >> changelog
+    echo "percona-postgresql-11 (${VERSION}-${RELEASE}) unstable; urgency=low" >> changelog
     echo "  * Initial Release." >> changelog
     echo " -- EvgeniyPatlan <evgeniy.patlan@percona.com> $(date -R)" >> changelog
 
@@ -450,8 +450,8 @@ build_deb(){
     export DEBIAN=$(lsb_release -sc)
     export ARCH=$(echo $(uname -m) | sed -e 's:i686:i386:g')
     #
-    echo "DEBIAN=${DEBIAN}" >> percona-platform-postgresql.properties
-    echo "ARCH=${ARCH}" >> percona-platform-postgresql.properties
+    echo "DEBIAN=${DEBIAN}" >> percona-postgresql.properties
+    echo "ARCH=${ARCH}" >> percona-postgresql.properties
 
     #
     DSC=$(basename $(find . -name '*.dsc' | sort | tail -n1))
@@ -487,7 +487,7 @@ DEB_RELEASE=1
 REVISION=0
 BRANCH="REL_11_STABLE"
 REPO="git://git.postgresql.org/git/postgresql.git"
-PRODUCT=percona-platform-postgresql
+PRODUCT=percona-postgresql
 DEBUG=0
 parse_arguments PICK-ARGS-FROM-ARGV "$@"
 VERSION='11'

@@ -11,11 +11,11 @@ Epoch:          1
 Source0:        %{name}-%{version}.tar.gz
 
 BuildRequires:  gcc
-BuildRequires:  percona-platform-postgresql11-server >= 11, percona-platform-postgresql11-server < 12
-BuildRequires:  percona-platform-postgresql11-devel >= 11, percona-platform-postgresql11-devel < 12
-BuildRequires:  openssl-devel percona-platform-postgresql-common
+BuildRequires:  percona-postgresql11-server >= 11, percona-postgresql11-server < 12
+BuildRequires:  percona-postgresql11-devel >= 11, percona-postgresql11-devel < 12
+BuildRequires:  openssl-devel percona-postgresql-common
 
-Requires:       percona-platform-postgresql11 percona-platform-postgresql11-libs percona-platform-postgresql11-server
+Requires:       percona-postgresql11 percona-postgresql11-libs percona-postgresql11-server
 
 %description
 The PostgreSQL Audit extension (pgaudit) provides detailed session

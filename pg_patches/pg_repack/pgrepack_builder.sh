@@ -149,9 +149,9 @@ get_sources(){
     wget wget https://raw.githubusercontent.com/EvgeniyPatlan/build_scripts/master/pg_patches/pg_repack/Makefile.patch
     patch -p0 < Makefile.patch
     rm -rf Makefile.patch
-    sed -i "s:postgresql-%v:percona-platform-postgresql-%v:" debian/rules
-    sed -i "s:postgresql-:percona-platform-postgresql-:g" debian/control
-    sed -i "s:postgresql-:percona-platform-postgresql-:g" debian/control.in
+    sed -i "s:postgresql-%v:percona-postgresql-%v:" debian/rules
+    sed -i "s:postgresql-:percona-postgresql-:g" debian/control
+    sed -i "s:postgresql-:percona-postgresql-:g" debian/control.in
     echo 11 > debian/pgversions
     rm -rf deb_packaging
     mkdir rpm
@@ -214,12 +214,12 @@ install_deps() {
             sleep 1
         done
         yum -y install epel-release
-        INSTALL_LIST="percona-platform-postgresql11 bison e2fsprogs-devel flex gettext git glibc-devel krb5-devel libicu-devel libselinux-devel libuuid-devel libxml2-devel libxslt-devel llvm5.0-devel llvm-toolset-7-clang openldap-devel openssl-devel pam-devel patch perl perl-ExtUtils-Embed perl-ExtUtils-MakeMaker python2-devel readline-devel rpmbuild percona-platform-postgresql11-devel percona-platform-postgresql11-server percona-platform-postgresql-common percona-platform-postgresql-server-dev-all rpm-build rpmdevtools selinux-policy systemd systemd-devel systemtap-sdt-devel tcl-devel vim wget zlib-devel"
+        INSTALL_LIST="percona-postgresql11 bison e2fsprogs-devel flex gettext git glibc-devel krb5-devel libicu-devel libselinux-devel libuuid-devel libxml2-devel libxslt-devel llvm5.0-devel llvm-toolset-7-clang openldap-devel openssl-devel pam-devel patch perl perl-ExtUtils-Embed perl-ExtUtils-MakeMaker python2-devel readline-devel rpmbuild percona-postgresql11-devel percona-postgresql11-server percona-postgresql-common percona-postgresql-server-dev-all rpm-build rpmdevtools selinux-policy systemd systemd-devel systemtap-sdt-devel tcl-devel vim wget zlib-devel"
         yum -y install ${INSTALL_LIST}
         source /opt/rh/devtoolset-7/enable
         source /opt/rh/llvm-toolset-7/enable
       else
-        INSTALL_LIST="percona-platform-postgresql11 clang-devel python3-devel perl-generators bison e2fsprogs-devel flex gettext git glibc-devel krb5-devel libicu-devel libselinux-devel libuuid-devel libxml2-devel libxslt-devel clang llvm-devel openldap-devel openssl-devel pam-devel patch perl perl-ExtUtils-MakeMaker perl-ExtUtils-Embed python2-devel readline-devel percona-platform-postgresql11-devel percona-platform-postgresql11-server percona-platform-postgresql-common percona-platform-postgresql-server-dev-all rpm-build rpmdevtools selinux-policy systemd systemd-devel systemtap-sdt-devel tcl-devel vim wget zlib-devel"
+        INSTALL_LIST="percona-postgresql11 clang-devel python3-devel perl-generators bison e2fsprogs-devel flex gettext git glibc-devel krb5-devel libicu-devel libselinux-devel libuuid-devel libxml2-devel libxslt-devel clang llvm-devel openldap-devel openssl-devel pam-devel patch perl perl-ExtUtils-MakeMaker perl-ExtUtils-Embed python2-devel readline-devel percona-postgresql11-devel percona-postgresql11-server percona-postgresql-common percona-postgresql-server-dev-all rpm-build rpmdevtools selinux-policy systemd systemd-devel systemtap-sdt-devel tcl-devel vim wget zlib-devel"
         yum -y install ${INSTALL_LIST}
         yum -y install binutils gcc gcc-c++
       fi
@@ -236,7 +236,7 @@ install_deps() {
           apt-get --allow-unauthenticated update
       fi
       apt-get update || true
-      INSTALL_LIST="build-essential percona-platform-postgresql-11 debconf debhelper clang-7 devscripts dh-exec dh-systemd git wget libkrb5-dev libssl-dev percona-platform-postgresql-common percona-platform-postgresql-server-dev-all"
+      INSTALL_LIST="build-essential percona-postgresql-11 debconf debhelper clang-7 devscripts dh-exec dh-systemd git wget libkrb5-dev libssl-dev percona-postgresql-common percona-postgresql-server-dev-all"
       DEBIAN_FRONTEND=noninteractive apt-get -y --allow-unauthenticated install ${INSTALL_LIST}
     fi
     return;

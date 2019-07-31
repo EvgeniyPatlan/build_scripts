@@ -22,7 +22,7 @@
  Patch1:        patronictl-reinit-wait.patch
  BuildRoot:     %{_tmppath}/%{buildprefix}-buildroot
 -Requires:      /usr/bin/python2.7, python-psycopg2 >= 2.7.0, postgresql-server, libyaml
-+Requires:      /usr/bin/python2.7, percona-platform-postgresql11-server, libyaml
++Requires:      /usr/bin/python2.7, percona-postgresql11-server, libyaml
 +%if 0%{?rhel} == 7
 +Requires: python-psycopg2
 +%else
