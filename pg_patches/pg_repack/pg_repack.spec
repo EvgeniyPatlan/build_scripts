@@ -1,5 +1,5 @@
 %global debug_package %{nil}
-%global sname   pg_repack
+%global sname   percona-pg_repack
 %global pgmajorversion 11
 %global pginstdir /usr/pgsql-11
 
@@ -41,11 +41,11 @@ USE_PGXS=1 make DESTDIR=%{buildroot} install
 %doc COPYRIGHT doc/pg_repack.rst
 %attr (755,root,root) %{pginstdir}/bin/pg_repack
 %attr (755,root,root) %{pginstdir}/lib/pg_repack.so
-%{pginstdir}/share/extension/%{sname}--%{version}.sql
-%{pginstdir}/share/extension/%{sname}.control
-%{pginstdir}/lib/bitcode/%{sname}*.bc
-%{pginstdir}/lib/bitcode/%{sname}/*.bc
-%{pginstdir}/lib/bitcode/%{sname}/pgut/*.bc
+%{pginstdir}/share/extension/pg_repack--%{version}.sql
+%{pginstdir}/share/extension/pg_repack.control
+%{pginstdir}/lib/bitcode/pg_repack*.bc
+%{pginstdir}/lib/bitcode/pg_repack/*.bc
+%{pginstdir}/lib/bitcode/pg_repack/pgut/*.bc
 
 %clean
 %{__rm} -rf %{buildroot}

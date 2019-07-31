@@ -119,7 +119,7 @@ get_sources(){
         echo "Sources will not be downloaded"
         return 0
     fi
-    PRODUCT=pg_repack
+    PRODUCT=percona-pg_repack
     echo "PRODUCT=${PRODUCT}" > pg_repack.properties
 
     PRODUCT_FULL=${PRODUCT}-${VERSION}
@@ -152,6 +152,8 @@ get_sources(){
     sed -i "s:postgresql-%v:percona-postgresql-%v:" debian/rules
     sed -i "s:postgresql-:percona-postgresql-:g" debian/control
     sed -i "s:postgresql-:percona-postgresql-:g" debian/control.in
+    sed -i "s|Source: pg-repack|Source: percona-pg-repack|" debian/control.in
+    sed -i "s|Source: pg-repack|Source: percona-pg-repack|" debian/control
     echo 11 > debian/pgversions
     rm -rf deb_packaging
     mkdir rpm
@@ -170,7 +172,7 @@ get_sources(){
     cp ${PRODUCT_FULL}.tar.gz $WORKDIR/source_tarball
     cp ${PRODUCT_FULL}.tar.gz $CURDIR/source_tarball
     cd $CURDIR
-    rm -rf pg_repack*
+    rm -rf percona-pg_repack*
     return
 }
 
@@ -378,7 +380,7 @@ build_source_deb(){
         echo "It is not possible to build source deb here"
         exit 1
     fi
-    rm -rf pg_repack*
+    rm -rf percona-pg_repack*
     get_tar "source_tarball"
     rm -f *.dsc *.orig.tar.gz *.debian.tar.gz *.changes
     #
@@ -389,12 +391,12 @@ build_source_deb(){
     BUILDDIR=${TARFILE%.tar.gz}
     #
     
-    mv ${TARFILE} pg-repack_${VERSION}.orig.tar.gz
+    mv ${TARFILE} percona-pg-repack_${VERSION}.orig.tar.gz
     cd ${BUILDDIR}
 
     cd debian
     rm -rf changelog
-    echo "pg-repack (${VERSION}-${RELEASE}) unstable; urgency=low" >> changelog
+    echo "percona-pg-repack (${VERSION}-${RELEASE}) unstable; urgency=low" >> changelog
     echo "  * Initial Release." >> changelog
     echo " -- EvgeniyPatlan <evgeniy.patlan@percona.com> $(date -R)" >> changelog
 
@@ -444,7 +446,7 @@ build_deb(){
     #
     dpkg-source -x ${DSC}
     #
-    cd pg-repack-${VERSION}
+    cd percona-pg-repack-${VERSION}
     dch -m -D "${DEBIAN}" --force-distribution -v "1:${VERSION}-${RELEASE}.${DEBIAN}" 'Update distribution'
     unset $(locale|cut -d= -f1)
     dpkg-buildpackage -rfakeroot -us -uc -b
@@ -473,7 +475,7 @@ DEB_RELEASE=1
 REVISION=0
 BRANCH="ver_1.4.4"
 REPO="https://github.com/reorg/pg_repack.git"
-PRODUCT=pg_repack
+PRODUCT=percona-pg_repack
 DEBUG=0
 parse_arguments PICK-ARGS-FROM-ARGV "$@"
 VERSION='1.4.4'
