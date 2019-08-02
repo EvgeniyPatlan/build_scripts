@@ -1,6 +1,6 @@
 --- patroni.spec        2019-07-29 16:50:38.911384876 -0700
 +++ patroni.spec    2019-07-29 16:51:14.657231343 -0700
-@@ -1,9 +1,14 @@
+@@ -1,17 +1,27 @@
 +%global _enable_debug_package 0
 +%global debug_package %{nil}
 +%global __os_install_post /usr/lib/rpm/brp-compress %{nil}
@@ -9,15 +9,17 @@
 -%define        INSTALLPATH /opt/app/patroni
 +%define        INSTALLPATH /opt/
  %define debug_package %{nil}
- Name:          patroni
+-Name:          patroni
++Name:          percona-patroni
  Version:       1.5.6
 -Release:       1.rhel7
 +Release:       1%{dist}
 +Epoch:                1
  License:       MIT
  Summary:       PostgreSQL high-availability manager
- Source:        patroni-1.5.6.tar.gz
-@@ -11,7 +16,12 @@
+-Source:        patroni-1.5.6.tar.gz
++Source:        percona-patroni-1.5.6.tar.gz
+ Source1:       patroni-customizations.tar.gz
  Patch0:        service-info-only-in-pretty-format.patch
  Patch1:        patronictl-reinit-wait.patch
  BuildRoot:     %{_tmppath}/%{buildprefix}-buildroot
