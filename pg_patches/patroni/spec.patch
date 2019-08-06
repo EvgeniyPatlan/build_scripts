@@ -60,13 +60,13 @@
  %{_sbindir}/update-alternatives --install %{_bindir}/patroni \
 -  patroni %{INSTALLPATH}/bin/patroni 10 \
 -  --slave %{_bindir}/patronictl patroni-patronictl %{INSTALLPATH}/bin/patronictl
-+  patroni %{INSTALLPATH}/bin/patroni 100 \
-+  --slave %{_bindir}/patronictl patroni-patronictl %{INSTALLPATH}/patroni/bin/patronictl
++  patroni %{INSTALLPATH}patroni/bin/patroni 100 \
++  --slave %{_bindir}/patronictl patroni-patronictl %{INSTALLPATH}patroni/bin/patronictl
  
  %postun
  if [ $1 -eq 0 ] ; then
 -  %{_sbindir}/update-alternatives --remove patroni %{INSTALLPATH}/bin/patroni
-+  %{_sbindir}/update-alternatives --remove patroni %{INSTALLPATH}/patroni/bin/patroni
++  %{_sbindir}/update-alternatives --remove patroni %{INSTALLPATH}patroni/bin/patroni
  fi
  
  %clean
