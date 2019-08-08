@@ -426,8 +426,8 @@ build_deb(){
     dpkg-buildpackage -rfakeroot -us -uc -b
     mkdir -p $CURDIR/deb
     mkdir -p $WORKDIR/deb
-    cp $WORKDIR/*.deb $WORKDIR/deb
-    cp $WORKDIR/*.deb $CURDIR/deb
+    cp $WORKDIR/*.*deb $WORKDIR/deb
+    cp $WORKDIR/*.*deb $CURDIR/deb
 }
 #main
 
