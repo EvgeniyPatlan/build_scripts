@@ -153,6 +153,10 @@ get_sources(){
     sed -i "s|Source: pgaudit|Source: percona-pgaudit|" debian/control.in
     sed -i "s|Upstream-Name: pgaudit|Upstream-Name: percona-pgaudit|" debian/copyright
     sed -i "s:postgresql-:percona-postgresql-:g" debian/control.in
+    sed -i 's:Debian PostgreSQL Maintainers <team+postgresql@tracker.debian.org>:Percona Development Team <info@percona.com>:' debian/control
+    sed -i '5d;' debian/control
+    sed -i 's:Debian PostgreSQL Maintainers <team+postgresql@tracker.debian.org>:Percona Development Team <info@percona.com>:' debian/control.in
+    sed -i '5d;' debian/control.in
     echo 11 > debian/pgversions
     rm -rf deb_packaging
     mkdir rpm

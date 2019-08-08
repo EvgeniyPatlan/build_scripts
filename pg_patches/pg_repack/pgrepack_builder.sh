@@ -154,6 +154,10 @@ get_sources(){
     sed -i "s:postgresql-:percona-postgresql-:g" debian/control.in
     sed -i "s|Source: pg-repack|Source: percona-pg-repack|" debian/control.in
     sed -i "s|Source: pg-repack|Source: percona-pg-repack|" debian/control
+    sed -i 's:Debian PostgreSQL Maintainers <team+postgresql@tracker.debian.org>:Percona Development Team <info@percona.com>:' debian/control
+    sed -i '5,6d;' debian/control
+    sed -i 's:Debian PostgreSQL Maintainers <team+postgresql@tracker.debian.org>:Percona Development Team <info@percona.com>:' debian/control.in
+    sed -i '5,6d;' debian/control.in
     echo 11 > debian/pgversions
     rm -rf deb_packaging
     mkdir rpm

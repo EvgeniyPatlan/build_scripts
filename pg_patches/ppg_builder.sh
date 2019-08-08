@@ -135,12 +135,14 @@ get_sources(){
         for file in $(ls | grep postgresql); do
             mv $file "percona-$file"
         done
-    wget https://raw.githubusercontent.com/EvgeniyPatlan/build_scripts/master/pg_patches/control.patch
-    wget https://raw.githubusercontent.com/EvgeniyPatlan/build_scripts/master/pg_patches/rules.patch
-    patch -p0 < control.patch
-    patch -p0 < rules.patch
-    sed -i 's/postgresql-11/percona-postgresql-11/' percona-postgresql-11.templates
-    rm -rf control.patch rules.patch
+        wget https://raw.githubusercontent.com/EvgeniyPatlan/build_scripts/master/pg_patches/control.patch
+        wget https://raw.githubusercontent.com/EvgeniyPatlan/build_scripts/master/pg_patches/rules.patch
+        patch -p0 < control.patch
+        patch -p0 < rules.patch
+        sed -i 's/postgresql-11/percona-postgresql-11/' percona-postgresql-11.templates
+        rm -rf control.patch rules.patch
+        sed -i 's:Debian PostgreSQL Maintainers <team+postgresql@tracker.debian.org>:Percona Development Team <info@percona.com>:' control
+        sed -i '5,8d;' control
     cd ../
     git clone https://git.postgresql.org/git/pgrpms.git
     mkdir rpm

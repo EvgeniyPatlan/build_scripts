@@ -154,7 +154,7 @@ get_sources(){
     cd debian
     sed -i 's|Source: patroni|Source: percona-patroni|' control
     sed -i 's|Package: patroni|Package: percona-patroni|' control
-    sed -i 's|Maintainer: Ants Aasma <ants@cybertec.at>|Maintainer: Percona Development <info@percona.com>|' control
+    sed -i 's|Maintainer: Ants Aasma <ants@cybertec.at>|Maintainer: Percona Development Team <info@percona.com>|' control
     wget https://raw.githubusercontent.com/EvgeniyPatlan/build_scripts/master/pg_patches/patroni/rules.patch
     patch -p0 < rules.patch
     rm -rf rules.patch

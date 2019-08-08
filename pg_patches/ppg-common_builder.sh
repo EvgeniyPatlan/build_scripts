@@ -149,6 +149,8 @@ get_sources(){
         echo "percona-postgresql-common (${VERSION}) unstable; urgency=low" >> changelog
         echo "  * Initial Release." >> changelog
         echo " -- EvgeniyPatlan <evgeniy.patlan@percona.com> $(date -R)" >> changelog
+        sed -i 's:Debian PostgreSQL Maintainers <team+postgresql@tracker.debian.org>:Percona Development Team <info@percona.com>:' control
+        sed -i '5,8d;' control
     cd ../
     cd rpm
         for file in $(ls | grep postgresql); do
