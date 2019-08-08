@@ -140,6 +140,7 @@ get_sources(){
     sed -i "s|Upstream-Name: pgbackrest|Upstream-Name: percona-pgbackrest|" debian/copyright
     sed -i 's:Debian PostgreSQL Maintainers <team+postgresql@tracker.debian.org>:Percona Development Team <info@percona.com>:' debian/control
     sed -i '5d;' debian/control
+    sed -i 's:debian/pgbackrest:debian/percona-pgbackrest:' debian/rules
     rm -rf deb_packaging
     mkdir rpm
     cd rpm
