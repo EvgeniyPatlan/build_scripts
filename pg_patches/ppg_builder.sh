@@ -132,7 +132,9 @@ get_sources(){
     mv deb_packaging/debian ./
     rm -rf deb_packaging
     cd debian
-    rename 's/postgresql/percona-postgresql/g' *
+        for file in $(ls | grep postgresql); do
+            mv $file "percona-$file"
+        done
     wget https://raw.githubusercontent.com/EvgeniyPatlan/build_scripts/master/pg_patches/control.patch
     wget https://raw.githubusercontent.com/EvgeniyPatlan/build_scripts/master/pg_patches/rules.patch
     patch -p0 < control.patch
@@ -145,11 +147,13 @@ get_sources(){
     mv pgrpms/rpm/redhat/11/postgresql/master/* rpm/
     rm -rf pgrpms
     cd rpm
-        for file in $(ls | grep postgresql); do
-            mv $file "percona-$file"
-        done
+        mv postgresql-11.spec percona-postgresql-11.spec
+        wget https://raw.githubusercontent.com/EvgeniyPatlan/build_scripts/master/pg_patches/postgresql-11.spec.patch
+        wget https://raw.githubusercontent.com/EvgeniyPatlan/build_scripts/master/pg_patches/conflicts.patch
+        patch -p0 < postgresql-11.spec.patch
+        patch -p0 < conflicts.patch
+        rm -rf postgresql-11.spec.patch conflicts.patch
     cd ../
-    sed -i 's/sname postgresql/sname percona-postgresql/' rpm/percona-postgresql-11.spec
     cd ${WORKDIR}
     #
     source percona-postgresql.properties
@@ -303,18 +307,10 @@ build_srpm(){
     cp -av rpm/* rpmbuild/SOURCES
     cd rpmbuild/SOURCES
     wget https://www.postgresql.org/files/documentation/pdf/11/postgresql-11-A4.pdf
-    mv postgresql-11-A4.pdf percona-postgresql-11-A4.pdf
     cd ../../
     cp -av rpmbuild/SOURCES/percona-postgresql-11.spec rpmbuild/SPECS
     #
     mv -fv ${TARFILE} ${WORKDIR}/rpmbuild/SOURCES
-    sed -i 's|Source0.*|Source0:        %{sname}-%{version}.tar.gz|' rpmbuild/SPECS/percona-postgresql-11.spec
-    sed -i 's:PGDG::' rpmbuild/SPECS/percona-postgresql-11.spec
-    sed -i 's:/bin/postgresql:/bin/%{sname}:' rpmbuild/SPECS/percona-postgresql-11.spec
-    sed -i 's:/bin/postgresql:/bin/percona-postgresql:' rpmbuild/SOURCES/percona-postgresql-11.service
-    sed -i 's:postgresql-$PGMAJORVERSION:percona-postgresql-$PGMAJORVERSION:' rpmbuild/SOURCES/percona-postgresql-11-setup
-    sed -i 's:pre postgresql:pre %{sname}:' rpmbuild/SPECS/percona-postgresql-11.spec
-    sed -i 's:%install:pushd doc/src; make all; popd\n %install:' rpmbuild/SPECS/percona-postgresql-11.spec
     if [ -f /opt/rh/devtoolset-7/enable ]; then
         source /opt/rh/devtoolset-7/enable
         source /opt/rh/llvm-toolset-7/enable
@@ -491,7 +487,7 @@ PRODUCT=percona-postgresql
 DEBUG=0
 parse_arguments PICK-ARGS-FROM-ARGV "$@"
 VERSION='11'
-RELEASE='4'
+RELEASE='5'
 PRODUCT_FULL=${PRODUCT}-${VERSION}-${RELEASE}
 
 check_workdir
