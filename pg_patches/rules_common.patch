@@ -1,15 +1,17 @@
---- rules	2019-07-04 11:57:11.809670000 +0000
-+++ rules	2019-07-04 12:00:42.737670000 +0000
-@@ -10,7 +10,7 @@
+--- rules	2019-08-12 16:05:21.206119898 +0300
++++ rules	2019-08-12 16:04:46.698302673 +0300
+@@ -10,8 +10,9 @@
  else
  	FLAVOR := default
  endif
 -SUPPORTED_VERSIONS := $(shell PG_SUPPORTED_VERSIONS="$(FLAVOR)" debian/supported-versions)
 +SUPPORTED_VERSIONS := 11
  DEFAULT_VER := $(lastword $(SUPPORTED_VERSIONS))
++DEFAULT_VER := 11
  LIBREADLINE := $(shell dpkg-query -W --showformat '$${Status} $${Package}\n' 'libreadline[0-9]'| sed -n '/ installed / {s/^.* //; p}'|sort -ru | head -n1)
  
-@@ -20,27 +20,27 @@
+ WITH_SYSTEMD=--with systemd
+@@ -20,27 +21,27 @@
  	dh $@ $(WITH_SYSTEMD)
  
  override_dh_auto_configure:
@@ -27,7 +29,8 @@
 +	/bin/echo -e "# See /usr/share/postgresql-common/supported-versions for documentation of this file\n$(FLAVOR)" > debian/percona-postgresql-client-common/etc/postgresql-common/supported_versions
  
  override_dh_installinit:
- 	dh_installinit --name=postgresql -u'defaults 19 21' -r
+-	dh_installinit -ppostgresql-common --name=postgresql -u'defaults 19 21' -r
++	dh_installinit -ppercona-postgresql-common --name=postgresql -u'defaults 19 21' -r
  
  override_dh_gencontrol:
 -	dh_gencontrol -ppostgresql-server-dev-all -- -Vserver-dev-all-depends="$(foreach v,$(SUPPORTED_VERSIONS),postgresql-server-dev-$v,)"
