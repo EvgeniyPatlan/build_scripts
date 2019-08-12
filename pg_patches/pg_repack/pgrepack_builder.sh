@@ -150,6 +150,7 @@ get_sources(){
     patch -p0 < Makefile.patch
     rm -rf Makefile.patch
     sed -i "s:postgresql-%v:percona-postgresql-%v:" debian/rules
+    sed -i "s:debian/postgresql:debian/percona-postgresql:g" debian/rules
     sed -i "s:postgresql-:percona-postgresql-:g" debian/control
     sed -i "s:postgresql-:percona-postgresql-:g" debian/control.in
     sed -i "s|Source: pg-repack|Source: percona-pg-repack|" debian/control.in
