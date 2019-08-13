@@ -22,6 +22,8 @@ Requires:       perl(DBD::Pg)
 Requires:       perl(Digest::SHA)
 Requires:       perl(IO::Socket::SSL)
 Requires:       perl(JSON::PP)
+Requires:	perl(Time::HiRes)
+Requires:	perl(Compress::Raw::Zlib)
 
 %description
 pgBackRest aims to be a simple, reliable backup and restore system that can
