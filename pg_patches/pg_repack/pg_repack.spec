@@ -37,7 +37,7 @@ USE_PGXS=1 make %{?_smp_mflags}
 USE_PGXS=1 make DESTDIR=%{buildroot} install
 
 %post
-update-alternatives --install /usr/bin/pg_repack pg_repack %{pginstdir}/bin/pg_repack
+update-alternatives --install /usr/bin/pg_repack pg_repack %{pginstdir}/bin/pg_repack 100
 
 %postun
 update-alternatives --remove pg_repack %{pginstdir}/bin/pg_repack
