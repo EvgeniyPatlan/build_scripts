@@ -79,14 +79,9 @@ add_percona_yum_repo(){
       wget http://jenkins.percona.com/yum-repo/percona-dev.repo
       mv -f percona-dev.repo /etc/yum.repos.d/
     fi
-    #++++++++++++++FIX ONCE percona-release package is updated++++++++++++++++++++
     yum -y install https://repo.percona.com/yum/percona-release-latest.noarch.rpm
     percona-release disable all
-    curl -O https://raw.githubusercontent.com/percona/percona-repositories/master/scripts/percona-release.sh
-    mv percona-release.sh /usr/bin/percona-release
-    chmod +x /usr/bin/percona-release
     percona-release enable ppg-11 experimental
-    #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     return
 }
 
@@ -99,16 +94,11 @@ EOL
         sed -i "s:@@DIST@@:$OS_NAME:g" /etc/apt/sources.list.d/percona-dev.list
     fi
     wget -qO - http://jenkins.percona.com/apt-repo/8507EFA5.pub | apt-key add -
-    #++++++++++++++FIX ONCE percona-release package is updated++++++++++++++++++++
     wget https://repo.percona.com/apt/percona-release_latest.generic_all.deb
     dpkg -i percona-release_latest.generic_all.deb
     percona-release disable all
-    wget https://raw.githubusercontent.com/percona/percona-repositories/master/scripts/percona-release.sh
-    mv percona-release.sh /usr/bin/percona-release
-    chmod +x /usr/bin/percona-release
     rm -f percona-release_latest.generic_all.deb
     percona-release enable ppg-11 experimental
-    #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     return
 }
 

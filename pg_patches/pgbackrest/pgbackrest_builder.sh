@@ -79,6 +79,9 @@ add_percona_yum_repo(){
       wget http://jenkins.percona.com/yum-repo/percona-dev.repo
       mv -f percona-dev.repo /etc/yum.repos.d/
     fi
+    yum -y install https://repo.percona.com/yum/percona-release-latest.noarch.rpm
+    percona-release disable all
+    percona-release enable ppg-11 experimental
     return
 }
 
@@ -91,6 +94,11 @@ EOL
     sed -i "s:@@DIST@@:$OS_NAME:g" /etc/apt/sources.list.d/percona-dev.list
   fi
   wget -qO - http://jenkins.percona.com/apt-repo/8507EFA5.pub | apt-key add -
+  wget https://repo.percona.com/apt/percona-release_latest.generic_all.deb
+  dpkg -i percona-release_latest.generic_all.deb
+  percona-release disable all
+  rm -f percona-release_latest.generic_all.deb
+  percona-release enable ppg-11 experimental
   return
 }
 
@@ -196,15 +204,24 @@ install_deps() {
       mv -f percona-dev.repo /etc/yum.repos.d/
       yum clean all
       RHEL=$(rpm --eval %rhel)
-      INSTALL_LIST="git rpm-build rpmdevtools systemd systemd-devel wget libxml2-devel openssl-devel perl perl-libxml-perl perl-DBD-Pg perl-Digest-SHA perl-IO-Socket-SSL perl-JSON-PP zlib-devel gcc make autoconf perl-ExtUtils-Embed"
+      if [ ${RHEL} = 8 ]; then
+          dnf -y module disable postgresql
+          dnf config-manager --set-enabled codeready-builder-for-rhel-8-x86_64-rpms
+          dnf clean all
+          rm -r /var/cache/dnf
+          dnf -y upgrade
+          yum -y install perl 
+      fi
+      INSTALL_LIST="percona-postgresql-common percona-postgresql11-devel git rpm-build rpmdevtools systemd systemd-devel wget libxml2-devel openssl-devel perl perl-libxml-perl perl-DBD-Pg perl-Digest-SHA perl-IO-Socket-SSL perl-JSON-PP zlib-devel gcc make autoconf perl-ExtUtils-Embed"
       yum -y install ${INSTALL_LIST}
+
     else
       export DEBIAN=$(lsb_release -sc)
       export ARCH=$(echo $(uname -m) | sed -e 's:i686:i386:g')
       apt-get -y install gnupg2
       add_percona_apt_repo
       apt-get update || true
-      INSTALL_LIST="build-essential debconf debhelper devscripts dh-exec dh-systemd git wget libxml-checker-perl libxml-libxml-perl libio-socket-ssl-perl libperl-dev libssl-dev libxml2-dev txt2man zlib1g-dev"
+      INSTALL_LIST="build-essential debconf debhelper devscripts dh-exec dh-systemd git wget libxml-checker-perl libxml-libxml-perl libio-socket-ssl-perl libperl-dev libssl-dev libxml2-dev txt2man zlib1g-dev libpq-dev"
       until DEBIAN_FRONTEND=noninteractive apt-get -y --allow-unauthenticated install ${INSTALL_LIST}; do
         sleep 1
         echo "waiting"
@@ -326,6 +343,8 @@ build_rpm(){
         source /opt/rh/devtoolset-7/enable
         source /opt/rh/llvm-toolset-7/enable
     fi
+    export LIBPQ_DIR=/usr/pgsql-11/
+    export LIBRARY_PATH=/usr/pgsql-11/lib/:/usr/pgsql-11/include/
     rpmbuild --define "_topdir ${WORKDIR}/rpmbuild" --define "dist .$OS_NAME" --define "version ${VERSION}" --rebuild rpmbuild/SRPMS/$SRC_RPM
 
     return_code=$?
@@ -442,12 +461,12 @@ INSTALL=0
 RPM_RELEASE=1
 DEB_RELEASE=1
 REVISION=0
-BRANCH="release/2.15.1"
+BRANCH="release/2.16"
 REPO="https://github.com/pgbackrest/pgbackrest.git"
 PRODUCT=percona-pgbackrest
 DEBUG=0
 parse_arguments PICK-ARGS-FROM-ARGV "$@"
-VERSION='2.15.1'
+VERSION='2.16'
 RELEASE='1'
 PRODUCT_FULL=${PRODUCT}-${VERSION}-${RELEASE}
 
