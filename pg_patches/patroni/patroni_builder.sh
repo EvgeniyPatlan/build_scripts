@@ -138,7 +138,7 @@ get_sources(){
     cd all_packaging
         git reset --hard
         git clean -xdf
-        git checkout "${VERSION}-${RELEASE}"
+        git checkout "v1.6.0"
     cd ../
     mv all_packaging/DEB/debian ./
     cd debian
@@ -305,6 +305,7 @@ build_srpm(){
     #
     cp -av rpm/* rpmbuild/SOURCES
     cp -av rpm/patroni.spec rpmbuild/SPECS
+    cp -av rpm/patches/* rpmbuild/SOURCES
     #
     mv -fv ${TARFILE} ${WORKDIR}/rpmbuild/SOURCES
     sed -i 's:.rhel7:%{dist}:' ${WORKDIR}/rpmbuild/SPECS/patroni.spec
@@ -469,12 +470,12 @@ INSTALL=0
 RPM_RELEASE=1
 DEB_RELEASE=1
 REVISION=0
-BRANCH="v1.5.6"
+BRANCH="v1.6.0"
 REPO="https://github.com/zalando/patroni.git"
 PRODUCT=percona-patroni
 DEBUG=0
 parse_arguments PICK-ARGS-FROM-ARGV "$@"
-VERSION='1.5.6'
+VERSION='1.6.0'
 RELEASE='1'
 PRODUCT_FULL=${PRODUCT}-${VERSION}-${RELEASE}
 
