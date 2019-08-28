@@ -142,10 +142,9 @@ get_sources(){
     cd ../
     mv all_packaging/DEB/debian ./
     cd debian
-    sed -i 's|Source: patroni|Source: percona-patroni|' control
-    sed -i 's|Package: patroni|Package: percona-patroni|' control
-    sed -i 's|Maintainer: Ants Aasma <ants@cybertec.at>|Maintainer: Percona Development Team <info@percona.com>|' control
     wget https://raw.githubusercontent.com/EvgeniyPatlan/build_scripts/master/pg_patches/patroni/rules.patch
+    rm -f control
+    wget https://raw.githubusercontent.com/EvgeniyPatlan/build_scripts/master/pg_patches/patroni/control
     patch -p0 < rules.patch
     rm -rf rules.patch
     cd ../
@@ -238,7 +237,7 @@ install_deps() {
           apt-get --allow-unauthenticated update
       fi
 
-      INSTALL_LIST="build-essential debconf debhelper clang-7 devscripts dh-exec dh-systemd git wget build-essential fakeroot devscripts python-psycopg2 python-setuptools python-dev libyaml-dev python3-virtualenv dh-virtualenv python3-psycopg2 wget git ruby ruby-dev rubygems build-essential curl golang"
+      INSTALL_LIST="build-essential debconf debhelper clang-7 devscripts dh-exec dh-systemd git wget build-essential fakeroot devscripts python-psycopg2 python-setuptools python-dev libyaml-dev python3-virtualenv dh-virtualenv python3-psycopg2 wget git ruby ruby-dev rubygems build-essential curl golang dh-python libjs-mathjax pyflakes3 python3-boto python3-dateutil python3-dnspython python3-etcd  python3-flake8 python3-kazoo python3-mccabe python3-mock python3-prettytable python3-psutil python3-pycodestyle python3-pytest python3-pytest-cov python3-setuptools python3-sphinx python3-sphinx-rtd-theme python3-tz python3-tzlocal sphinx-common python3-click"
       DEBIAN_FRONTEND=noninteractive apt-get -y install ${INSTALL_LIST}
     fi
     return;
@@ -445,6 +444,7 @@ build_deb(){
     dpkg-source -x ${DSC}
     #
     cd ${PRODUCT}-${VERSION}
+    sed -i 's:ExecStart=/bin/patroni /etc/patroni.yml:ExecStart=/opt/patroni/bin/patroni /etc/patroni/patroni.yml' extras/startup-scripts/patroni.service
     dch -m -D "${DEBIAN}" --force-distribution -v "1:${VERSION}-${RELEASE}.${DEBIAN}" 'Update distribution'
     unset $(locale|cut -d= -f1)
     dpkg-buildpackage -rfakeroot -us -uc -b
