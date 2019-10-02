@@ -151,10 +151,8 @@ get_sources(){
     cd rpm
         mv postgresql-11.spec percona-postgresql-11.spec
         wget https://raw.githubusercontent.com/EvgeniyPatlan/build_scripts/master/pg_patches/postgresql-11.spec.patch
-        wget https://raw.githubusercontent.com/EvgeniyPatlan/build_scripts/master/pg_patches/conflicts.patch
         patch -p0 < postgresql-11.spec.patch
-        patch -p0 < conflicts.patch
-        rm -rf postgresql-11.spec.patch conflicts.patch
+        rm -rf postgresql-11.spec.patch
     cd ../
     cd ${WORKDIR}
     #
@@ -457,7 +455,7 @@ build_deb(){
     dpkg-source -x ${DSC}
     #
     cd ${PRODUCT}-${VERSION}-${VERSION}
-    dch -m -D "${DEBIAN}" --force-distribution -v "1:${VERSION}-${RELEASE}.${DEBIAN}" 'Update distribution'
+    dch -m -D "${DEBIAN}" --force-distribution -v "2:${VERSION}-${RELEASE}.${DEB_RELEASE}.${DEBIAN}" 'Update distribution'
     unset $(locale|cut -d= -f1)
     dpkg-buildpackage -rfakeroot -us -uc -b
     mkdir -p $CURDIR/deb
@@ -480,8 +478,8 @@ OS_NAME=
 ARCH=
 OS=
 INSTALL=0
-RPM_RELEASE=1
-DEB_RELEASE=1
+RPM_RELEASE=2
+DEB_RELEASE=2
 REVISION=0
 BRANCH="REL_11_STABLE"
 REPO="git://git.postgresql.org/git/postgresql.git"
