@@ -151,6 +151,8 @@ get_sources(){
         echo " -- EvgeniyPatlan <evgeniy.patlan@percona.com> $(date -R)" >> changelog
         sed -i 's:Debian PostgreSQL Maintainers <team+postgresql@tracker.debian.org>:Percona Development Team <info@percona.com>:' control
         sed -i '5,8d;' control
+        sed -i 's:percona-postgresql-plpython-$v,::' rules
+        sed -i 's:"10":"11":' supported-versions
     cd ../
     cd rpm
         for file in $(ls | grep postgresql); do
@@ -159,6 +161,7 @@ get_sources(){
         wget https://raw.githubusercontent.com/EvgeniyPatlan/build_scripts/master/pg_patches/percona-postgresql-common.spec.patch
         patch -p0 < percona-postgresql-common.spec.patch
         rm -rf percona-postgresql-common.spec.patch
+	sed -i 's:1%:2%:' percona-postgresql-common.spec
     cd ../
     cd ${WORKDIR}
     #
@@ -421,7 +424,7 @@ build_deb(){
     dpkg-source -x ${DSC}
     #
     cd ${PRODUCT}-common-${VERSION}
-    dch -m -D "${DEBIAN}" --force-distribution -v "${VERSION}-${RELEASE}.${DEBIAN}" 'Update distribution'
+    dch -m -D "${DEBIAN}" --force-distribution -v "1:${VERSION}-${RELEASE}.${DEB_RELEASE}.${DEBIAN}" 'Update distribution'
     unset $(locale|cut -d= -f1)
     dpkg-buildpackage -rfakeroot -us -uc -b
     mkdir -p $CURDIR/deb
@@ -444,8 +447,8 @@ OS_NAME=
 ARCH=
 OS=
 INSTALL=0
-RPM_RELEASE=1
-DEB_RELEASE=1
+RPM_RELEASE=2
+DEB_RELEASE=2
 REVISION=0
 BRANCH="204"
 REPO="https://salsa.debian.org/postgresql/postgresql-common.git"
