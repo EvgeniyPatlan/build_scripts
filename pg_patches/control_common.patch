@@ -173,8 +173,8 @@
 + percona-postgresql-server-dev-all,
   ${postgresql-all-depends},
   ${misc:Depends},
-+Breaks: postgresql-server-dev-all
-+Provides: postgresql-server-dev-all
++Breaks: postgresql-all
++Provides: postgresql-all
  Description: metapackage depending on all PostgreSQL server packages
   This metapackage depends on all PostgreSQL server packages, in all
   supported versions (excluding documentation and debug symbols). It
