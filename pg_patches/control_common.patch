@@ -1,5 +1,5 @@
---- control 2019-10-10 16:30:16.654761314 +0000
-+++ control 2019-10-10 16:31:03.226667530 +0000
+--- control.orig 2019-10-11 08:45:56.725386361 +0000
++++ control 2019-10-11 09:44:33.655808552 +0000
 @@ -1,28 +1,20 @@
 -Source: postgresql-common
 +Source: percona-postgresql-common
@@ -123,7 +123,7 @@
 - postgresql-client-${default-version},
 + percona-postgresql-client-${default-version},
   ${misc:Depends},
-+Breaks: postgresql-client, percona-postgresql-client
++Breaks: postgresql-client
 +Provides: postgresql-client
 +Replaces: postgresql-client, percona-postgresql-client
  Description: front-end programs for PostgreSQL (supported version)
@@ -142,7 +142,7 @@
 - postgresql-doc-${default-version},
 + percona-postgresql-doc-${default-version},
   ${misc:Depends},
-+Breaks: postgresql-doc, percona-postgresql-doc
++Breaks: postgresql-doc
 +Provides: postgresql-doc
 +Replaces: postgresql-doc, percona-postgresql-doc
  Description: documentation for the PostgreSQL database management system
@@ -159,7 +159,7 @@
 - postgresql-contrib-${default-version},
 + percona-postgresql-contrib-${default-version},
   ${misc:Depends},
-+Breaks: postgresql-contrib, percona-postgresql-contrib
++Breaks: postgresql-contrib
 +Provides: postgresql-contrib
 +Replaces: postgresql-contrib, percona-postgresql-contrib
  Description: additional facilities for PostgreSQL (supported version)
@@ -179,7 +179,7 @@
 + percona-postgresql-server-dev-all,
   ${postgresql-all-depends},
   ${misc:Depends},
-+Breaks: postgresql-all, percona-postgresql-all
++Breaks: postgresql-all
 +Provides: postgresql-all
 +Replaces: postgresql-all, percona-postgresql-all
  Description: metapackage depending on all PostgreSQL server packages

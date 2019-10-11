@@ -153,6 +153,7 @@ get_sources(){
         sed -i '5,8d;' control
         sed -i 's:percona-postgresql-plpython-$v,::' rules
         sed -i 's:"10":"11":' supported-versions
+	sed -i 's:Breaks:#Breaks:g' control
     cd ../
     cd rpm
         for file in $(ls | grep postgresql); do
@@ -424,7 +425,7 @@ build_deb(){
     dpkg-source -x ${DSC}
     #
     cd ${PRODUCT}-common-${VERSION}
-    dch -m -D "${DEBIAN}" --force-distribution -v "1:${VERSION}-${RELEASE}.${DEB_RELEASE}.${DEBIAN}" 'Update distribution'
+    dch -m -D "${DEBIAN}" --force-distribution -v "${VERSION}-${RELEASE}.${DEBIAN}" 'Update distribution'
     unset $(locale|cut -d= -f1)
     dpkg-buildpackage -rfakeroot -us -uc -b
     mkdir -p $CURDIR/deb
@@ -456,7 +457,7 @@ PRODUCT=percona-postgresql
 DEBUG=0
 parse_arguments PICK-ARGS-FROM-ARGV "$@"
 VERSION='204'
-RELEASE='1'
+RELEASE='2'
 PRODUCT_FULL=${PRODUCT}-${VERSION}
 
 check_workdir
