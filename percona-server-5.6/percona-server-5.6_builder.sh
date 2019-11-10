@@ -403,7 +403,7 @@ build_srpm(){
     #
     mv -fv ${TARFILE} ${WORKDIR}/rpmbuild/SOURCES
 
-    rpmbuild -bs --define "_topdir ${WORKDIR}/rpmbuild" --with tokudb --define "dist .generic" rpmbuild/SPECS/percona-server.spec
+    rpmbuild -bs --define "_topdir ${WORKDIR}/rpmbuild" --with tokudb --define "dist .generic" --define "pkg_ver .${RPM_RELEASE}" rpmbuild/SPECS/percona-server.spec
     #
 
     mkdir -p ${WORKDIR}/srpm
@@ -453,13 +453,13 @@ build_rpm(){
     if [ ${RHEL} = 6 ]; then
         if [ ${ARCH} = x86_64 ]; then
             source /opt/percona-devtoolset/enable
-            rpmbuild --define "_topdir ${WORKDIR}/rpmbuild" --with tokudb --define "dist .el${RHEL}" --rebuild rpmbuild/SRPMS/${SRC_RPM}
+            rpmbuild --define "_topdir ${WORKDIR}/rpmbuild" --with tokudb --define "dist .el${RHEL}" --define "pkg_ver .${RPM_RELEASE}" --rebuild rpmbuild/SRPMS/${SRC_RPM}
 	else
             source /opt/rh/devtoolset-2/enable
-            rpmbuild --define "_topdir ${WORKDIR}/rpmbuild" --define "dist .el${RHEL}" --rebuild rpmbuild/SRPMS/${SRC_RPM}
+            rpmbuild --define "_topdir ${WORKDIR}/rpmbuild" --define "dist .el${RHEL}" --define "pkg_ver .${RPM_RELEASE}" --rebuild rpmbuild/SRPMS/${SRC_RPM}
         fi
     else
-        rpmbuild --define "_topdir ${WORKDIR}/rpmbuild" --with tokudb --define "dist .el${RHEL}" --rebuild rpmbuild/SRPMS/${SRC_RPM}
+        rpmbuild --define "_topdir ${WORKDIR}/rpmbuild" --with tokudb --define "dist .el${RHEL}" --define "pkg_ver .${RPM_RELEASE}" --rebuild rpmbuild/SRPMS/${SRC_RPM}
     fi
 
     return_code=$?
@@ -684,8 +684,8 @@ OS=
 TOKUBACKUP_REPO=
 PERCONAFT_REPO=
 INSTALL=0
-RPM_RELEASE=1
-DEB_RELEASE=1
+RPM_RELEASE=2
+DEB_RELEASE=2
 REVISION=0
 BRANCH="5.6"
 YASSL=0
