@@ -168,8 +168,12 @@ get_database(){
     fi
     mkdir bld
     cd bld
+    if [ $RHEL != 6 ]; then
     #cmake .. -DDOWNLOAD_BOOST=1 -DENABLE_DOWNLOADS=1 -DWITH_SSL=system -DWITH_BOOST=$WORKDIR/boost -DWITH_PROTOBUF=bundled
-    cmake .. -DDOWNLOAD_BOOST=1 -DENABLE_DOWNLOADS=1 -DWITH_SSL=system -DWITH_BOOST=$WORKDIR/boost -DWITH_PROTOBUF=bundled
+        cmake .. -DDOWNLOAD_BOOST=1 -DENABLE_DOWNLOADS=1 -DWITH_SSL=system -DWITH_BOOST=$WORKDIR/boost -DWITH_PROTOBUF=bundled
+    else
+        cmake .. -DDOWNLOAD_BOOST=1 -DENABLE_DOWNLOADS=1 -DWITH_SSL=/usr/local/openssl/lib -DWITH_BOOST=$WORKDIR/boost -DWITH_PROTOBUF=bundled
+    fi
     cmake --build . --target mysqlclient
     cmake --build . --target mysqlxclient
     cd $WORKDIR
@@ -328,13 +332,14 @@ install_deps() {
             yum -y install time zlib-devel libaio-devel bison cmake pam-devel libeatmydata jemalloc-devel
             yum -y install perl-Time-HiRes libcurl-devel openldap-devel unzip wget libcurl-devel
             yum -y install perl-Env perl-Data-Dumper perl-JSON MySQL-python perl-Digest perl-Digest-MD5 perl-Digest-Perl-MD5 || true
-            yum -y install libicu-devel automake m4 libtool python-devel zip rpmlint
+            yum -y install libicu-devel automake m4 libtool python-devel zip rpmlint python3-devel
             until yum -y install centos-release-scl; do
                 echo "waiting"
                 sleep 1
             done
             yum -y install  gcc-c++ devtoolset-7-gcc-c++ devtoolset-7-binutils cmake3
             yum -y install rh-python36
+
             alternatives --install /usr/local/bin/cmake cmake /usr/bin/cmake 10 \
 --slave /usr/local/bin/ctest ctest /usr/bin/ctest \
 --slave /usr/local/bin/cpack cpack /usr/bin/cpack \
@@ -353,6 +358,14 @@ install_deps() {
             yum -y install Percona-Server-shared-56
             yum install -y percona-devtoolset-gcc percona-devtoolset-binutils python-devel percona-devtoolset-gcc-c++ percona-devtoolset-libstdc++-devel percona-devtoolset-valgrind-devel
             sed -i "668s:(void:(const void:" /usr/include/openssl/bio.h
+            wget https://github.com/openssl/openssl/archive/OpenSSL_1_1_1d.tar.gz
+            tar -xvzf OpenSSL_1_1_1d.tar.gz
+            cd openssl-OpenSSL_1_1_1d/
+            ./config --prefix=/usr/local/openssl --openssldir=/usr/local/openssl shared zlib
+            make -j4
+            make install
+            cd ../
+            rm -rf OpenSSL_1_1_1d.tar.gz openssl-OpenSSL_1_1_1d
         fi
         if [ "x$RHEL" = "x7" ]; then
             sed -i '/#!\/bin\/bash/a exit 0' /usr/lib/rpm/brp-python-bytecompile
@@ -507,12 +520,16 @@ build_srpm(){
     sed -i '/with_protobuf/,/endif/d' mysql-shell.spec
     sed -i 's/@COMMERCIAL_VER@/0/g' mysql-shell.spec
     sed -i 's/@PRODUCT_SUFFIX@//g' mysql-shell.spec
-    sed -i 's/@MYSH_NO_DASH_VERSION@/8.0.17/g' mysql-shell.spec
+    sed -i 's/@MYSH_NO_DASH_VERSION@/8.0.18/g' mysql-shell.spec
     sed -i "s:@RPM_RELEASE@:${RPM_RELEASE}:g" mysql-shell.spec
     sed -i 's/@LICENSE_TYPE@/GPLv2/g' mysql-shell.spec
     sed -i 's/@PRODUCT@/MySQL Shell/' mysql-shell.spec
-    sed -i 's/@MYSH_VERSION@/8.0.17/g' mysql-shell.spec
-    sed -i "s:-DHAVE_PYTHON=1 \ : -DHAVE_PYTHON=1 -DWITH_STATIC_LINKING=ON -DMYSQL_EXTRA_LIBRARIES='-lz -ldl -lssl -lcrypto -licui18n -licuuc -licudata' :" mysql-shell.spec
+    sed -i 's/@MYSH_VERSION@/8.0.18/g' mysql-shell.spec
+    if [ $RHEL != 6 ]; then
+        sed -i "s:-DHAVE_PYTHON=1: -DHAVE_PYTHON=1 -DWITH_PROTOBUF=bundled -DPROTOBUF_INCLUDE_DIRS=/usr/local/include -DPROTOBUF_LIBRARIES=/usr/local/lib/libprotobuf.a -DWITH_STATIC_LINKING=ON -DMYSQL_EXTRA_LIBRARIES='-lz -ldl -lssl -lcrypto -licui18n -licuuc -licudata' :" mysql-shell.spec
+    else
+        sed -i "s:-DHAVE_PYTHON=1: -DHAVE_PYTHON=1 -DBUNDLED_OPENSSL_DIR=/usr/local/openssl/ -DWITH_PROTOBUF=bundled -DPROTOBUF_INCLUDE_DIRS=/usr/local/include -DPROTOBUF_LIBRARIES=/usr/local/lib/libprotobuf.a -DWITH_STATIC_LINKING=ON -DMYSQL_EXTRA_LIBRARIES='-lz -ldl -lssl -lcrypto -licui18n -licuuc -licudata' :" mysql-shell.spec
+    fi
     sed -i "s|BuildRequires:  python-devel|%if 0%{?rhel} > 7\nBuildRequires:  python2-devel\n%else\nBuildRequires:  python-devel\n%endif|" mysql-shell.spec
     mv mysql-shell.spec percona-mysql-shell.spec
     cd ${WORKDIR}
@@ -581,7 +598,7 @@ build_rpm(){
     fi
     cd ${WORKDIR}
     #
-    rpmbuild --define "_topdir ${WORKDIR}/rpmbuild" --define "dist .el${RHEL}" --define "with_mysql_source $WORKDIR/percona-server" --define "static 1" --define "with_protobuf $WORKDIR/protobuf/src/" --define "v8_includedir $WORKDIR/v8/include" --define "v8_libdir ${WORKDIR}/v8/out.gn/x64.release.sample/obj" --define "with_oci $WORKDIR/oci_sdk" --rebuild rpmbuild/SRPMS/${SRCRPM}
+    rpmbuild --define "_topdir ${WORKDIR}/rpmbuild" --define "dist .el${RHEL}" --define "with_mysql_source $WORKDIR/percona-server" --define "static 1" --define "with_protobuf $WORKDIR/protobuf/src/" --define "v8_includedir $WORKDIR/v8/include" --define "v8_libdir ${WORKDIR}/v8/out.gn/x64.release.sample/obj" --define "with_oci $WORKDIR/oci_sdk" --define "bundled_openssl system" --rebuild rpmbuild/SRPMS/${SRCRPM}
     return_code=$?
     if [ $return_code != 0 ]; then
         exit $return_code
@@ -771,13 +788,13 @@ ARCH=
 OS=
 PROTOBUF_REPO="https://github.com/protocolbuffers/protobuf.git"
 SHELL_REPO="https://github.com/mysql/mysql-shell.git"
-SHELL_BRANCH="8.0.17"
+SHELL_BRANCH="8.0.18"
 PROTOBUF_BRANCH=v3.6.1
 INSTALL=0
 RPM_RELEASE=1
 DEB_RELEASE=1
 REVISION=0
-BRANCH="release-8.0.17-8"
+BRANCH="release-8.0.18-9"
 RPM_RELEASE=1
 DEB_RELEASE=1
 YASSL=0
