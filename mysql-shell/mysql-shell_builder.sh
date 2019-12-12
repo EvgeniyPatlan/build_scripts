@@ -799,7 +799,7 @@ build_tarball(){
     mkdir bld
     cd bld
     if [ -f /etc/redhat-release ]; then
-        if [ $RHEL != 6 ]; then
+        if [ $RHEL = 8 ]; then
             cmake .. -DMYSQL_SOURCE_DIR=${WORKDIR}/percona-server \
                 -DMYSQL_BUILD_DIR=${WORKDIR}/percona-server/bld \
                 -DMYSQL_EXTRA_LIBRARIES="-lz -ldl -lssl -lcrypto -licui18n -licuuc -licudata " \
@@ -813,7 +813,7 @@ build_tarball(){
                 -DPROTOBUF_INCLUDE_DIRS=/usr/local/include \
                 -DPROTOBUF_LIBRARIES=/usr/local/lib/libprotobuf.a \
                 -DBUNDLED_OPENSSL_DIR=system
-        else
+        elif [ $RHEL = 7 ]; then
             cmake .. -DMYSQL_SOURCE_DIR=${WORKDIR}/percona-server \
                 -DMYSQL_BUILD_DIR=${WORKDIR}/percona-server/bld \
                 -DMYSQL_EXTRA_LIBRARIES="-lz -ldl -lssl -lcrypto -licui18n -licuuc -licudata " \
@@ -826,8 +826,28 @@ build_tarball(){
                 -DWITH_PROTOBUF=bundled \
                 -DPROTOBUF_INCLUDE_DIRS=/usr/local/include \
                 -DPROTOBUF_LIBRARIES=/usr/local/lib/libprotobuf.a\
-                -DBUNDLED_OPENSSL_DIR=/usr/local/openssl
-                -DBUNDELD_PYTHON_DIR=
+                -DPYTHON_INCLUDE_DIRS=/usr/local/python37/include/python3.7m \
+                -DPYTHON_LIBRARIES=/usr/local/python37/lib/libpython3.7m.so \
+                -DBUNDLED_SHARED_PYTHON=yes \
+                -DBUNDLED_PYTHON_DIR=/usr/local/python37/
+        else
+            cmake .. -DMYSQL_SOURCE_DIR=${WORKDIR}/percona-server \
+                -DMYSQL_BUILD_DIR=${WORKDIR}/percona-server/bld \
+                -DMYSQL_EXTRA_LIBRARIES="-lz -ldl -lssl -lcrypto -licui18n -licuuc -licudata " \
+                -DWITH_PROTOBUF=${WORKDIR}/protobuf/src \
+                -DV8_INCLUDE_DIR=${WORKDIR}/v8/include \
+                -DV8_LIB_DIR=${WORKDIR}/v8/out.gn/x64.release.sample/obj \
+                -DHAVE_PYTHON=2 \
+                -DWITH_OCI=$WORKDIR/oci_sdk \
+                -DWITH_STATIC_LINKING=ON \
+                -DWITH_PROTOBUF=bundled \
+                -DPROTOBUF_INCLUDE_DIRS=/usr/local/include \
+                -DPROTOBUF_LIBRARIES=/usr/local/lib/libprotobuf.a\
+                -DBUNDLED_OPENSSL_DIR=/usr/local/openssl11 \
+                -DPYTHON_INCLUDE_DIRS=/usr/local/python37/include/python3.7m \
+                -DPYTHON_LIBRARIES=/usr/local/python37/lib/libpython3.7m.so \
+                -DBUNDLED_SHARED_PYTHON=yes \
+                -DBUNDLED_PYTHON_DIR=/usr/local/python37/
         fi
     else
         cmake .. -DMYSQL_SOURCE_DIR=${WORKDIR}/percona-server \
@@ -844,6 +864,9 @@ build_tarball(){
     mkdir ${NAME}-${VERSION}-${OS_NAME}
     cp -r bin ${NAME}-${VERSION}-${OS_NAME}/
     cp -r share ${NAME}-${VERSION}-${OS_NAME}/
+    if [ -d lib ]; then
+        cp -r lib ${NAME}-${VERSION}-${OS_NAME}/
+    fi
     tar -zcvf ${NAME}-${VERSION}-${OS_NAME}.tar.gz ${NAME}-${VERSION}-${OS_NAME}
     mkdir -p ${WORKDIR}/${DIRNAME}
     mkdir -p ${CURDIR}/${DIRNAME}
