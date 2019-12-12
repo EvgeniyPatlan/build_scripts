@@ -168,10 +168,16 @@ get_database(){
     fi
     mkdir bld
     cd bld
-    #cmake .. -DDOWNLOAD_BOOST=1 -DENABLE_DOWNLOADS=1 -DWITH_SSL=system -DWITH_BOOST=$WORKDIR/boost -DWITH_PROTOBUF=bundled
+    if [ "x$OS" = "xrpm" ]; then
+        if [ $RHEL != 6 ]; then
+            #cmake .. -DDOWNLOAD_BOOST=1 -DENABLE_DOWNLOADS=1 -DWITH_SSL=system -DWITH_BOOST=$WORKDIR/boost -DWITH_PROTOBUF=bundled
+            cmake .. -DDOWNLOAD_BOOST=1 -DENABLE_DOWNLOADS=1 -DWITH_SSL=system -DWITH_BOOST=$WORKDIR/boost -DWITH_PROTOBUF=bundled
+        else
+            cmake .. -DDOWNLOAD_BOOST=1 -DENABLE_DOWNLOADS=1 -DWITH_SSL=/usr/local/openssl11 -DWITH_BOOST=$WORKDIR/boost -DWITH_PROTOBUF=bundled
+        fi
+    else
         cmake .. -DDOWNLOAD_BOOST=1 -DENABLE_DOWNLOADS=1 -DWITH_SSL=system -DWITH_BOOST=$WORKDIR/boost -DWITH_PROTOBUF=bundled
-        #cmake .. -DDOWNLOAD_BOOST=1 -DENABLE_DOWNLOADS=1 -DWITH_SSL=/usr/local/openssl/lib -DWITH_BOOST=$WORKDIR/boost -DWITH_PROTOBUF=bundled
-    #fi
+    fi
     cmake --build . --target mysqlclient
     cmake --build . --target mysqlxclient
     cd $WORKDIR
@@ -268,12 +274,12 @@ build_oci_sdk(){
             pip install -e .
         fi
     else
-        if [ $RHEL = 8 ]; then
-            pip3 install --user -r requirements.txt
-            pip3 install --user -e .
+        if [ $RHEL = 7 ]; then
+            pip install --user -r requirements.txt
+            pip install --user -e .
         else
-            pip install -r requirements.txt
-            pip install -e .
+            pip3 install -r requirements.txt
+            pip3 install -e .
         fi
     fi
     mv oci_sdk ${WORKDIR}/
@@ -291,6 +297,31 @@ get_system(){
         OS="deb"
     fi
     return
+}
+
+build_python(){
+    cd ${WORKDIR}
+    wget https://www.python.org/ftp/python/3.7.5/Python-3.7.5.tgz
+    tar xzf Python-3.7.5.tgz
+    cd Python-3.7.5
+    sed -i 's/SSL=\/usr\/local\/ssl/SSL=\/usr\/local\/openssl11/g' Modules/Setup.dist
+    sed -i '211,214 s/^##*//' Modules/Setup.dist
+    ./configure --prefix=/usr/local/python37 --with-openssl=/usr/local/openssl11 --with-system-ffi --enable-shared LDFLAGS=-Wl,-rpath=/usr/local/python37/lib 
+    make
+    make install
+    ln -s /usr/local/python37/bin/*3.7* /usr/local/bin
+    ln -s /usr/local/python37/bin/*3.7* /usr/bin
+    echo "/usr/local/python3.7/lib" > /etc/ld.so.conf.d/python-3.7.conf
+    mv /usr/bin/python /usr/bin/python_back
+    if [ -f /usr/bin/python2.7 ]; then
+        update-alternatives --install /usr/bin/python python /usr/bin/python2.7 1
+    else
+        update-alternatives --install /usr/bin/python python /usr/bin/python2.6 1
+    fi
+    update-alternatives --install /usr/bin/python python /usr/bin/python3.7 100
+    ldconfig /usr/local/lib
+    cd ../
+    
 }
 install_deps() {
     if [ $INSTALL = 0 ]
@@ -348,25 +379,37 @@ install_deps() {
 --slave /usr/local/bin/cpack cpack /usr/bin/cpack3 \
 --slave /usr/local/bin/ccmake ccmake /usr/bin/ccmake3 
             source /opt/rh/rh-python36/enable
-            pip install --upgrade pip
-            pip install virtualenv
-            build_oci_sdk
         fi
         if [ "x$RHEL" = "x6" ]; then
             yum -y install Percona-Server-shared-56
             yum install -y percona-devtoolset-gcc percona-devtoolset-binutils python-devel percona-devtoolset-gcc-c++ percona-devtoolset-libstdc++-devel percona-devtoolset-valgrind-devel
             sed -i "668s:(void:(const void:" /usr/include/openssl/bio.h
+            cd ${WORKDIR}
             wget https://github.com/openssl/openssl/archive/OpenSSL_1_1_1d.tar.gz
             tar -xvzf OpenSSL_1_1_1d.tar.gz
             cd openssl-OpenSSL_1_1_1d/
-            ./config --prefix=/usr/local/openssl --openssldir=/usr/local/openssl shared zlib
+            ./config --prefix=/usr/local/openssl11 --openssldir=/usr/local/openssl11 shared zlib
             make -j4
             make install
             cd ../
             rm -rf OpenSSL_1_1_1d.tar.gz openssl-OpenSSL_1_1_1d
+            echo "/usr/local/openssl11/lib" > /etc/ld.so.conf.d/openssl-1.1.1d.conf
+            echo "include ld.so.conf.d/*.conf" > /etc/ld.so.conf
+            ldconfig -v
+            build_python
         fi
         if [ "x$RHEL" = "x7" ]; then
             sed -i '/#!\/bin\/bash/a exit 0' /usr/lib/rpm/brp-python-bytecompile
+            build_python
+        fi
+        if [ "x$RHEL" = "x6" ]; then
+            pip3 install --upgrade pip
+            pip3 install virtualenv
+            build_oci_sdk
+        else
+            pip install --upgrade pip
+            pip install virtualenv
+            build_oci_sdk
         fi
     else
         apt-get -y install dirmngr || true
@@ -523,11 +566,7 @@ build_srpm(){
     sed -i 's/@LICENSE_TYPE@/GPLv2/g' mysql-shell.spec
     sed -i 's/@PRODUCT@/MySQL Shell/' mysql-shell.spec
     sed -i 's/@MYSH_VERSION@/8.0.18/g' mysql-shell.spec
-    if [ $RHEL != 6 ]; then
-        sed -i "s:-DHAVE_PYTHON=1: -DHAVE_PYTHON=1 -DBUNDLED_OPENSSL_DIR=system -DWITH_PROTOBUF=bundled -DPROTOBUF_INCLUDE_DIRS=/usr/local/include -DPROTOBUF_LIBRARIES=/usr/local/lib/libprotobuf.a -DWITH_STATIC_LINKING=ON -DMYSQL_EXTRA_LIBRARIES='-lz -ldl -lssl -lcrypto -licui18n -licuuc -licudata' :" mysql-shell.spec
-    else
-        sed -i "s:-DHAVE_PYTHON=1: -DHAVE_PYTHON=1 -DBUNDLED_OPENSSL_DIR=system -DWITH_PROTOBUF=bundled -DPROTOBUF_INCLUDE_DIRS=/usr/local/include -DPROTOBUF_LIBRARIES=/usr/local/lib/libprotobuf.a -DWITH_STATIC_LINKING=ON -DMYSQL_EXTRA_LIBRARIES='-lz -ldl -lssl -lcrypto -licui18n -licuuc -licudata' :" mysql-shell.spec
-    fi
+    sed -i "s:-DHAVE_PYTHON=1: -DHAVE_PYTHON=2 -DBUNDLED_OPENSSL_DIR=%{openssl_param} -DWITH_PROTOBUF=bundled -DPROTOBUF_INCLUDE_DIRS=/usr/local/include -DPROTOBUF_LIBRARIES=/usr/local/lib/libprotobuf.a -DWITH_STATIC_LINKING=ON -DMYSQL_EXTRA_LIBRARIES='-lz -ldl -lssl -lcrypto -licui18n -licuuc -licudata' :" mysql-shell.spec
     sed -i "s|BuildRequires:  python-devel|%if 0%{?rhel} > 7\nBuildRequires:  python2-devel\n%else\nBuildRequires:  python-devel\n%endif|" mysql-shell.spec
     mv mysql-shell.spec percona-mysql-shell.spec
     cd ${WORKDIR}
@@ -590,13 +629,21 @@ build_rpm(){
     get_database
     get_v8
     build_oci_sdk
-    if [ $RHEL != 8 ]; then
+    if [ $RHEL = 7 ]; then
         source /opt/rh/devtoolset-7/enable
         source /opt/rh/rh-python36/enable
+    elif [ $RHEL = 6 ]; then
+        source /opt/rh/devtoolset-7/enable
     fi
     cd ${WORKDIR}
     #
-    rpmbuild --define "_topdir ${WORKDIR}/rpmbuild" --define "dist .el${RHEL}" --define "with_mysql_source $WORKDIR/percona-server" --define "static 1" --define "with_protobuf $WORKDIR/protobuf/src/" --define "v8_includedir $WORKDIR/v8/include" --define "v8_libdir ${WORKDIR}/v8/out.gn/x64.release.sample/obj" --define "with_oci $WORKDIR/oci_sdk" --rebuild rpmbuild/SRPMS/${SRCRPM}
+    if [ ${RHEL} = 6 ]; then
+        rpmbuild --define "_topdir ${WORKDIR}/rpmbuild" --define "dist .el${RHEL}" --define "with_mysql_source $WORKDIR/percona-server" --define "static 1" --define "with_protobuf $WORKDIR/protobuf/src/" --define "v8_includedir $WORKDIR/v8/include" --define "v8_libdir ${WORKDIR}/v8/out.gn/x64.release.sample/obj" --define "with_oci $WORKDIR/oci_sdk" --define "bundled_openssl /usr/local/openssl11" --define "openssl_param /usr/local/openssl11" --define "bundled_python /usr/local/python37/" --define "bundled_shared_python yes" --rebuild rpmbuild/SRPMS/${SRCRPM}
+    elif [ ${RHEL} = 7 ]; then
+        rpmbuild --define "_topdir ${WORKDIR}/rpmbuild" --define "dist .el${RHEL}" --define "with_mysql_source $WORKDIR/percona-server" --define "static 1" --define "with_protobuf $WORKDIR/protobuf/src/" --define "v8_includedir $WORKDIR/v8/include" --define "v8_libdir ${WORKDIR}/v8/out.gn/x64.release.sample/obj" --define "with_oci $WORKDIR/oci_sdk" --define "bundled_openssl system" --define "openssl_param system" --define "bundled_python /usr/local/python37/" --define "bundled_shared_python yes" --rebuild rpmbuild/SRPMS/${SRCRPM}
+    else
+        rpmbuild --define "_topdir ${WORKDIR}/rpmbuild" --define "dist .el${RHEL}" --define "with_mysql_source $WORKDIR/percona-server" --define "static 1" --define "with_protobuf $WORKDIR/protobuf/src/" --define "v8_includedir $WORKDIR/v8/include" --define "v8_libdir ${WORKDIR}/v8/out.gn/x64.release.sample/obj" --define "with_oci $WORKDIR/oci_sdk" --define "openssl_param system" --rebuild rpmbuild/SRPMS/${SRCRPM}
+    fi
     return_code=$?
     if [ $return_code != 0 ]; then
         exit $return_code
@@ -751,7 +798,39 @@ build_tarball(){
     DIRNAME="tarball"
     mkdir bld
     cd bld
-    cmake .. -DMYSQL_SOURCE_DIR=${WORKDIR}/percona-server \
+    if [ -f /etc/redhat-release ]; then
+        if [ $RHEL != 6 ]; then
+            cmake .. -DMYSQL_SOURCE_DIR=${WORKDIR}/percona-server \
+                -DMYSQL_BUILD_DIR=${WORKDIR}/percona-server/bld \
+                -DMYSQL_EXTRA_LIBRARIES="-lz -ldl -lssl -lcrypto -licui18n -licuuc -licudata " \
+                -DWITH_PROTOBUF=${WORKDIR}/protobuf/src \
+                -DV8_INCLUDE_DIR=${WORKDIR}/v8/include \
+                -DV8_LIB_DIR=${WORKDIR}/v8/out.gn/x64.release.sample/obj \
+                -DHAVE_PYTHON=1 \
+                -DWITH_OCI=$WORKDIR/oci_sdk \
+                -DWITH_STATIC_LINKING=ON \
+                -DWITH_PROTOBUF=bundled \
+                -DPROTOBUF_INCLUDE_DIRS=/usr/local/include \
+                -DPROTOBUF_LIBRARIES=/usr/local/lib/libprotobuf.a \
+                -DBUNDLED_OPENSSL_DIR=system
+        else
+            cmake .. -DMYSQL_SOURCE_DIR=${WORKDIR}/percona-server \
+                -DMYSQL_BUILD_DIR=${WORKDIR}/percona-server/bld \
+                -DMYSQL_EXTRA_LIBRARIES="-lz -ldl -lssl -lcrypto -licui18n -licuuc -licudata " \
+                -DWITH_PROTOBUF=${WORKDIR}/protobuf/src \
+                -DV8_INCLUDE_DIR=${WORKDIR}/v8/include \
+                -DV8_LIB_DIR=${WORKDIR}/v8/out.gn/x64.release.sample/obj \
+                -DHAVE_PYTHON=1 \
+                -DWITH_OCI=$WORKDIR/oci_sdk \
+                -DWITH_STATIC_LINKING=ON \
+                -DWITH_PROTOBUF=bundled \
+                -DPROTOBUF_INCLUDE_DIRS=/usr/local/include \
+                -DPROTOBUF_LIBRARIES=/usr/local/lib/libprotobuf.a\
+                -DBUNDLED_OPENSSL_DIR=/usr/local/openssl
+                -DBUNDELD_PYTHON_DIR=
+        fi
+    else
+        cmake .. -DMYSQL_SOURCE_DIR=${WORKDIR}/percona-server \
             -DMYSQL_BUILD_DIR=${WORKDIR}/percona-server/bld \
             -DMYSQL_EXTRA_LIBRARIES="-lz -ldl -lssl -lcrypto -licui18n -licuuc -licudata " \
             -DWITH_PROTOBUF=${WORKDIR}/protobuf/src \
@@ -760,6 +839,7 @@ build_tarball(){
             -DHAVE_PYTHON=1 \
             -DWITH_OCI=$WORKDIR/oci_sdk \
             -DWITH_STATIC_LINKING=ON
+    fi
     make -j4
     mkdir ${NAME}-${VERSION}-${OS_NAME}
     cp -r bin ${NAME}-${VERSION}-${OS_NAME}/
@@ -792,7 +872,7 @@ INSTALL=0
 RPM_RELEASE=1
 DEB_RELEASE=1
 REVISION=0
-BRANCH="release-8.0.18-9"
+BRANCH="Percona-Server-8.0.18-9"
 RPM_RELEASE=1
 DEB_RELEASE=1
 YASSL=0
