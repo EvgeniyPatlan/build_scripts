@@ -132,7 +132,7 @@ get_sources(){
     mv deb_packaging/debian ./
     rm -rf deb_packaging
     cd debian
-        git checkout 11
+        git checkout -b 11 remotes/origin/11
         for file in $(ls | grep postgresql); do
             mv $file "percona-$file"
         done
