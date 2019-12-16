@@ -194,7 +194,7 @@ install_deps() {
     if [ $( id -u ) -ne 0 ]
     then
         echo "It is not possible to instal dependencies. Please run as root"
-        exit 1
+        exit 1z
     fi
     CURPLACE=$(pwd)
 
@@ -211,7 +211,7 @@ install_deps() {
             sleep 1
         done
         yum -y install epel-release
-        INSTALL_LIST="bison e2fsprogs-devel flex gettext git glibc-devel krb5-devel libicu-devel libselinux-devel libuuid-devel libxml2-devel libxslt-devel llvm-toolset-7-clang llvm5.0-devel openldap-devel openssl-devel pam-devel patch perl perl-ExtUtils-MakeMaker perl-ExtUtils-Embed python2-devel readline-devel rpmbuild rpmdevtools selinux-policy systemd systemd-devel systemtap-sdt-devel tcl-devel vim wget zlib-devel"
+        INSTALL_LIST="bison e2fsprogs-devel flex gettext git glibc-devel krb5-devel libicu-devel libselinux-devel libuuid-devel libxml2-devel libxslt-devel llvm-toolset-7-clang llvm5.0-devel openldap-devel openssl-devel pam-devel patch perl perl-ExtUtils-MakeMaker perl-ExtUtils-Embed python2-devel readline-devel rpmbuild rpmdevtools selinux-policy systemd systemd-devel systemtap-sdt-devel tcl-devel vim wget zlib-devel python3-devel"
         yum -y install ${INSTALL_LIST}
         source /opt/rh/devtoolset-7/enable
         source /opt/rh/llvm-toolset-7/enable
