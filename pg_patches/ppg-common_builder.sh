@@ -143,17 +143,14 @@ get_sources(){
         rm -rf control_common.patch maintscripts-functions.patch percona-postgresql-common.templates.patch rules_common.patch supported_versions.patch
         sed -i 's:postgresql-common:percona-postgresql-common:' percona-postgresql-common.preinst
         sed -i 's:postgresql-common:percona-postgresql-common:' percona-postgresql-common.postrm
-	sed -i 's:db_get postgresql-common:db_get percona-postgresql-common:' percona-postgresql-common.postinst
-	sed -i 's: ucfr postgresql-common:ucfr percona-postgresql-common:' percona-postgresql-common.postinst
-	rm -rf changelog
+	    sed -i 's:db_get postgresql-common:db_get percona-postgresql-common:' percona-postgresql-common.postinst
+	    sed -i 's: ucfr postgresql-common:ucfr percona-postgresql-common:' percona-postgresql-common.postinst
+	    rm -rf changelog
         echo "percona-postgresql-common (${VERSION}) unstable; urgency=low" >> changelog
         echo "  * Initial Release." >> changelog
         echo " -- EvgeniyPatlan <evgeniy.patlan@percona.com> $(date -R)" >> changelog
-        sed -i 's:Debian PostgreSQL Maintainers <team+postgresql@tracker.debian.org>:Percona Development Team <info@percona.com>:' control
-        sed -i '5,8d;' control
         sed -i 's:percona-postgresql-plpython-$v,::' rules
         sed -i 's:"10":"11":' supported-versions
-	sed -i 's:Breaks:#Breaks:g' control
     cd ../
     cd rpm
         for file in $(ls | grep postgresql); do
@@ -448,16 +445,16 @@ OS_NAME=
 ARCH=
 OS=
 INSTALL=0
-RPM_RELEASE=2
-DEB_RELEASE=2
+RPM_RELEASE=1
+DEB_RELEASE=1
 REVISION=0
-BRANCH="204"
+BRANCH="210"
 REPO="https://salsa.debian.org/postgresql/postgresql-common.git"
 PRODUCT=percona-postgresql
 DEBUG=0
 parse_arguments PICK-ARGS-FROM-ARGV "$@"
-VERSION='204'
-RELEASE='2'
+VERSION='210'
+RELEASE='1'
 PRODUCT_FULL=${PRODUCT}-${VERSION}
 
 check_workdir

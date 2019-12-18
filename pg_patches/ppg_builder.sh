@@ -144,8 +144,6 @@ get_sources(){
         patch -p0 < rules.patch
         sed -i 's/postgresql-11/percona-postgresql-11/' percona-postgresql-11.templates
         rm -rf control.patch rules.patch
-        sed -i 's:Debian PostgreSQL Maintainers <team+postgresql@tracker.debian.org>:Percona Development Team <info@percona.com>:' control
-        sed -i '5,8d;' control
     cd ../
     git clone https://git.postgresql.org/git/pgrpms.git
     mkdir rpm

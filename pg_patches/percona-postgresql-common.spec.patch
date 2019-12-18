@@ -1,10 +1,11 @@
---- percona-postgresql-common.spec 2019-10-04 09:04:25.685663735 -0400
-+++ percona-postgresql-common.spec 2019-10-04 09:07:19.139835485 -0400
+--- percona-postgresql-common.spec	2019-12-18 10:55:33.206011531 +0200
++++ percona-postgresql-common.spec	2019-12-18 13:19:34.229607372 +0200
 @@ -1,23 +1,24 @@
 -Name:           postgresql-common
 +Name:           percona-postgresql-common
  Version:        %{version}
- Release:        1%{?dist}
+-Release:        1%{?dist}
++Release:        2%{?dist}
  BuildArch:      noarch
  Summary:        PostgreSQL database-cluster manager
 -Packager:       Debian PostgreSQL Maintainers <pkg-postgresql-public@lists.alioth.debian.org>
@@ -84,7 +85,7 @@
  
  %if 0%{?rhel} >= 7
  # Prepare systemd unit files, but only for RHEL/CentOS 7 and above...
-@@ -101,9 +102,8 @@
+@@ -101,9 +102,9 @@
  popd
  %endif
  
@@ -92,10 +93,11 @@
 +%files -n percona-postgresql-common -f files-percona-postgresql-common
  %attr(0755, root, root) %config /etc/init.d/postgresql
 -#%attr(0755, root, root) /usr/share/postgresql-common/postgresql-common.postinst
++#%attr(0755, root, root) /usr/share/postgresql-common/peprcona-postgresql-common.postinst
  /usr/share/postgresql-common/init-functions-compat
  %config /etc/postgresql-common/createcluster.conf
  %config /etc/logrotate.d/postgresql-common
-@@ -114,9 +114,9 @@
+@@ -114,9 +115,9 @@
  %config /lib/systemd/system-generators/postgresql-generator
  %endif
  
@@ -107,7 +109,7 @@
  
  %post
  # create postgres user
-@@ -136,10 +136,10 @@
+@@ -136,10 +137,10 @@
      sed -i -e '/ su /d' /etc/logrotate.d/postgresql-common || :
  fi
  
