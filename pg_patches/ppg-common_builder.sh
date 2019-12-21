@@ -127,14 +127,14 @@ get_sources(){
     REVISION=$(git rev-parse --short HEAD)
     echo "REVISION=${REVISION}" >> ${WORKDIR}/percona-postgresql.properties
     cd debian
-        for file in $(ls | grep ^postgresql); do 
+        for file in $(ls | grep ^postgresql); do
             mv $file "percona-$file"
         done
-        wget https://raw.githubusercontent.com/EvgeniyPatlan/build_scripts/master/pg_patches/control_common.patch
-        wget https://raw.githubusercontent.com/EvgeniyPatlan/build_scripts/master/pg_patches/maintscripts-functions.patch
-        wget https://raw.githubusercontent.com/EvgeniyPatlan/build_scripts/master/pg_patches/percona-postgresql-common.templates.patch
-        wget https://raw.githubusercontent.com/EvgeniyPatlan/build_scripts/master/pg_patches/rules_common.patch
-        wget https://raw.githubusercontent.com/EvgeniyPatlan/build_scripts/master/pg_patches/supported_versions.patch
+        wget https://raw.githubusercontent.com/EvgeniyPatlan/build_scripts/12.1/pg_patches/control_common.patch
+        wget https://raw.githubusercontent.com/EvgeniyPatlan/build_scripts/12.1/pg_patches/maintscripts-functions.patch
+        wget https://raw.githubusercontent.com/EvgeniyPatlan/build_scripts/12.1/pg_patches/percona-postgresql-common.templates.patch
+        wget https://raw.githubusercontent.com/EvgeniyPatlan/build_scripts/12.1/pg_patches/rules_common.patch
+        wget https://raw.githubusercontent.com/EvgeniyPatlan/build_scripts/12.1/pg_patches/supported_versions.patch
         patch -p0 < control_common.patch
         patch -p0 < maintscripts-functions.patch
         patch -p0 < percona-postgresql-common.templates.patch
@@ -150,13 +150,14 @@ get_sources(){
         echo "  * Initial Release." >> changelog
         echo " -- EvgeniyPatlan <evgeniy.patlan@percona.com> $(date -R)" >> changelog
         sed -i 's:percona-postgresql-plpython-$v,::' rules
-        sed -i 's:"10":"11":' supported-versions
+        sed -i 's:"10":"12":g' supported-versions
+        sed -i 's:"11":"12":' supported-versions
     cd ../
     cd rpm
         for file in $(ls | grep postgresql); do
             mv $file "percona-$file"
         done
-        wget https://raw.githubusercontent.com/EvgeniyPatlan/build_scripts/master/pg_patches/percona-postgresql-common.spec.patch
+        wget https://raw.githubusercontent.com/EvgeniyPatlan/build_scripts/12.1/pg_patches/percona-postgresql-common.spec.patch
         patch -p0 < percona-postgresql-common.spec.patch
         rm -rf percona-postgresql-common.spec.patch
 	sed -i 's:1%:2%:' percona-postgresql-common.spec
@@ -167,7 +168,7 @@ get_sources(){
     #
 
     tar --owner=0 --group=0 --exclude=.* -czf ${PRODUCT_FULL}.tar.gz ${PRODUCT_FULL}
-    echo "UPLOAD=UPLOAD/experimental/BUILDS/${PRODUCT}-11/${PRODUCT_FULL}/${BRANCH}/${REVISION}/${BUILD_ID}" >> percona-postgresql.properties
+    echo "UPLOAD=UPLOAD/experimental/BUILDS/${PRODUCT}-12/${PRODUCT_FULL}/${BRANCH}/${REVISION}/${BUILD_ID}" >> percona-postgresql.properties
     mkdir $WORKDIR/source_tarball
     mkdir $CURDIR/source_tarball
     cp ${PRODUCT_FULL}.tar.gz $WORKDIR/source_tarball
