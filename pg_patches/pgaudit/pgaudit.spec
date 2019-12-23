@@ -16,9 +16,9 @@ BuildRequires:  percona-postgresql11-server >= 11, percona-postgresql11-server <
 BuildRequires:  percona-postgresql11-devel >= 11, percona-postgresql11-devel < 12
 BuildRequires:  openssl-devel percona-postgresql-common
 
-Requires:       percona-postgresql11 = 11.6
-Requires:       percona-postgresql11-libs = 11.6
-Requires:       percona-postgresql11-server = 11.6
+Requires:       percona-postgresql11
+Requires:       percona-postgresql11-libs
+Requires:       percona-postgresql11-server
 
 Provides:       pgaudit pgaudit13
 %description
