@@ -84,7 +84,7 @@ add_percona_yum_repo(){
     chmod +x percona-release.sh
     mv percona-release.sh percona-release
     ./percona-release disable all
-    ./percona-release enable ppg-11.6 experimental
+    ./percona-release enable ppg-12.1 experimental
     return
 }
 
@@ -105,7 +105,7 @@ EOL
     chmod +x percona-release.sh
     mv percona-release.sh percona-release
     ./percona-release disable all
-    ./percona-release enable ppg-11.6 experimental
+    ./percona-release enable ppg-12.1 experimental
     return
 }
 
@@ -144,10 +144,10 @@ get_sources(){
     git clone https://salsa.debian.org/postgresql/pg-repack.git deb_packaging
     git checkout -b percona-pg_repack debian/${VERSION}-${RELEASE}
     mv deb_packaging/debian ./
-    wget https://raw.githubusercontent.com/EvgeniyPatlan/build_scripts/master/pg_patches/pg_repack/Makefile.patch
-    wget https://raw.githubusercontent.com/EvgeniyPatlan/build_scripts/master/pg_patches/pg_repack/rules.patch
-    wget https://raw.githubusercontent.com/EvgeniyPatlan/build_scripts/master/pg_patches/pg_repack/control.patch
-    wget https://raw.githubusercontent.com/EvgeniyPatlan/build_scripts/master/pg_patches/pg_repack/control.in.patch
+    wget https://raw.githubusercontent.com/EvgeniyPatlan/build_scripts/12.1/pg_patches/pg_repack/Makefile.patch
+    wget https://raw.githubusercontent.com/EvgeniyPatlan/build_scripts/12.1/pg_patches/pg_repack/rules.patch
+    wget https://raw.githubusercontent.com/EvgeniyPatlan/build_scripts/12.1/pg_patches/pg_repack/control.patch
+    wget https://raw.githubusercontent.com/EvgeniyPatlan/build_scripts/12.1/pg_patches/pg_repack/control.in.patch
     patch -p0 < Makefile.patch
     rm -rf Makefile.patch
     cd debian
@@ -156,12 +156,12 @@ get_sources(){
     patch -p0 < ../control.in.patch
     cd ../
     rm -f control.in.patch control.patch rules.patch
-    echo 11 > debian/pgversions
+    echo 12 > debian/pgversions
     rm -rf deb_packaging
     mkdir rpm
     cd rpm
-    wget https://raw.githubusercontent.com/EvgeniyPatlan/build_scripts/master/pg_patches/pg_repack/pg_repack.spec
-    wget https://raw.githubusercontent.com/EvgeniyPatlan/build_scripts/master/pg_patches/pg_repack/pg_repack-pg11-makefile-pgxs.patch
+    wget https://raw.githubusercontent.com/EvgeniyPatlan/build_scripts/12.1/pg_patches/pg_repack/pg_repack.spec
+    wget https://raw.githubusercontent.com/EvgeniyPatlan/build_scripts/12.1/pg_patches/pg_repack/pg_repack-pg12-makefile-pgxs.patch
     cd ${WORKDIR}
     #
     source pg_repack.properties
@@ -218,12 +218,12 @@ install_deps() {
             sleep 1
         done
         yum -y install epel-release
-        INSTALL_LIST="percona-postgresql11 bison e2fsprogs-devel flex gettext git glibc-devel krb5-devel libicu-devel libselinux-devel libuuid-devel libxml2-devel libxslt-devel llvm5.0-devel llvm-toolset-7-clang openldap-devel openssl-devel pam-devel patch perl perl-ExtUtils-Embed perl-ExtUtils-MakeMaker python2-devel readline-devel rpmbuild percona-postgresql11-devel percona-postgresql11-server percona-postgresql-common percona-postgresql-server-dev-all rpm-build rpmdevtools selinux-policy systemd systemd-devel systemtap-sdt-devel tcl-devel vim wget zlib-devel"
+        INSTALL_LIST="percona-postgresql12 bison e2fsprogs-devel flex gettext git glibc-devel krb5-devel libicu-devel libselinux-devel libuuid-devel libxml2-devel libxslt-devel llvm5.0-devel llvm-toolset-7-clang openldap-devel openssl-devel pam-devel patch perl perl-ExtUtils-Embed perl-ExtUtils-MakeMaker python2-devel readline-devel rpmbuild percona-postgresql12-devel percona-postgresql12-server percona-postgresql-common percona-postgresql-server-dev-all rpm-build rpmdevtools selinux-policy systemd systemd-devel systemtap-sdt-devel tcl-devel vim wget zlib-devel"
         yum -y install ${INSTALL_LIST}
         source /opt/rh/devtoolset-7/enable
         source /opt/rh/llvm-toolset-7/enable
       else
-        INSTALL_LIST="percona-postgresql11 clang-devel python3-devel perl-generators bison e2fsprogs-devel flex gettext git glibc-devel krb5-devel libicu-devel libselinux-devel libuuid-devel libxml2-devel libxslt-devel clang llvm-devel openldap-devel openssl-devel pam-devel patch perl perl-ExtUtils-MakeMaker perl-ExtUtils-Embed python2-devel readline-devel percona-postgresql11-devel percona-postgresql11-server percona-postgresql-common percona-postgresql-server-dev-all rpm-build rpmdevtools selinux-policy systemd systemd-devel systemtap-sdt-devel tcl-devel vim wget zlib-devel"
+        INSTALL_LIST="percona-postgresql12 clang-devel python3-devel perl-generators bison e2fsprogs-devel flex gettext git glibc-devel krb5-devel libicu-devel libselinux-devel libuuid-devel libxml2-devel libxslt-devel clang llvm-devel openldap-devel openssl-devel pam-devel patch perl perl-ExtUtils-MakeMaker perl-ExtUtils-Embed python2-devel readline-devel percona-postgresql12-devel percona-postgresql12-server percona-postgresql-common percona-postgresql-server-dev-all rpm-build rpmdevtools selinux-policy systemd systemd-devel systemtap-sdt-devel tcl-devel vim wget zlib-devel"
         yum -y install ${INSTALL_LIST}
         yum -y install binutils gcc gcc-c++
       fi
@@ -235,7 +235,7 @@ install_deps() {
       percona-release enable tools experimental
       apt-get update || true
       #INSTALL_LIST="build-essential percona-postgresql-11 debconf debhelper clang-7 devscripts dh-exec dh-systemd git wget libkrb5-dev libssl-dev percona-postgresql-common percona-postgresql-server-dev-all"
-      INSTALL_LIST="dpkg-dev build-essential percona-postgresql-11 debconf debhelper devscripts dh-exec dh-systemd git wget libkrb5-dev libssl-dev percona-postgresql-common percona-postgresql-server-dev-all"
+      INSTALL_LIST="dpkg-dev build-essential percona-postgresql-12 debconf debhelper devscripts dh-exec dh-systemd git wget libkrb5-dev libssl-dev percona-postgresql-common percona-postgresql-server-dev-all"
       DEBIAN_FRONTEND=noninteractive apt-get -y --allow-unauthenticated install ${INSTALL_LIST}
     fi
     return;
