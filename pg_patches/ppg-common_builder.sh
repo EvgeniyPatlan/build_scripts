@@ -152,6 +152,8 @@ get_sources(){
         sed -i 's:percona-postgresql-plpython-$v,::' rules
         sed -i 's:"10":"12":g' supported-versions
         sed -i 's:"11":"12":' supported-versions
+        sed -i 's|SUPPORTED_VERSIONS := 11|SUPPORTED_VERSIONS := 12|' rules
+        sed -i 's|DEFAULT_VER := 11|DEFAULT_VER := 12|' rules
     cd ../
     cd rpm
         for file in $(ls | grep postgresql); do
