@@ -33,7 +33,7 @@
  Description: header files for libpq5 (PostgreSQL library)
   Header files and static library for compiling C programs to link
   with the libpq library in order to communicate with a PostgreSQL
-@@ -132,17 +125,17 @@
+@@ -132,17 +125,18 @@
   .
   PostgreSQL is an object-relational SQL database management system.
  
@@ -51,11 +51,12 @@
   ${misc:Depends},
   ${shlibs:Depends}
 -Provides: postgresql-contrib-11
-+Provides: percona-postgresql-contrib-11, postgresql-contrib-11, postgresql-11, postgresql
++Provides: percona-postgresql-contrib-11 (= 2:11.6-2~), postgresql-contrib-11(= 2:11.6-2~), postgresql-11(= 2:11.6-2~), postgresql (= 2:11.6-2~)
++Replaces: postgresql-contrib-11 (<= 11.6-2~), postgresql-contrib-11 (<= 11.6-2~), postgresql-11 (<= 11.6-2~), postgresql (<= 11.6-2~)
  Recommends: sysstat
  Breaks:
   postgresql-11-citus (<< 8.0.0.PGDG-2~),
-@@ -176,17 +169,17 @@
+@@ -176,19 +170,19 @@
  #dbg# .
  #dbg# PostgreSQL is an object-relational SQL database management system.
  
@@ -73,11 +74,14 @@
 -Suggests: postgresql-11, postgresql-doc-11
 -Provides: postgresql-client
 +Suggests: percona-postgresql-11, percona-postgresql-doc-11
-+Provides: percona-postgresql-client, postgresql-client, postgresql-client-11
++Provides: percona-postgresql-client, postgresql-client (= 2:11.6-2~), postgresql-client-11 (= 2:11.6-2~)
  Conflicts: postgresql-server-dev-11 (<< 11.6-2~)
- Replaces: postgresql-server-dev-11 (<< 11.6-2~)
+-Replaces: postgresql-server-dev-11 (<< 11.6-2~)
++Replaces: postgresql-server-dev-11 (<= 11.6-2~), postgresql-client (<= 11.6-2~), postgresql-client-11 (<= 11.6-2~)
  Description: front-end programs for PostgreSQL 11
-@@ -202,19 +195,19 @@
+  This package contains client and administrative programs for
+  PostgreSQL: these are the interactive terminal client psql and
+@@ -202,19 +196,20 @@
   .
   PostgreSQL is an object-relational SQL database management system.
  
@@ -96,11 +100,12 @@
   ${shlibs:Depends}
  Breaks:
   postgresql-server-dev-all (<< 181~)
-+Provides: postgresql-server-dev-all, postgresql-server-dev-all-11
++Provides: postgresql-server-dev-all (= 2:11.6-2~), postgresql-server-dev-all-11 (= 2:11.6-2~)
++Replaces: postgresql-server-dev-all (<= 11.6-2~), postgresql-server-dev-all-11 (<= 11.6-2~)
  Description: development files for PostgreSQL 11 server-side programming
   Header files for compiling SSI code to link into PostgreSQL's backend; for
   example, for C functions to be called from SQL.
-@@ -225,7 +218,7 @@
+@@ -225,7 +220,7 @@
   .
   PostgreSQL is an object-relational SQL database management system.
  
@@ -109,7 +114,7 @@
  Architecture: all
  Multi-Arch: foreign
  Section: doc
-@@ -237,14 +230,14 @@
+@@ -237,14 +232,15 @@
   .
   PostgreSQL is an object-relational SQL database management system.
  
@@ -123,11 +128,12 @@
   ${misc:Depends},
   ${shlibs:Depends}
 -Provides: postgresql-plperl
-+Provides: percona-postgresql-plperl, postgresql-plperl, postgresql-plperl-11
++Provides: percona-postgresql-plperl, postgresql-plperl (= 2:11.6-2~), postgresql-plperl-11 (= 2:11.6-2~)
++Replaces: postgresql-plperl (<= 11.6-2~), postgresql-plperl-11 (<= 11.6-2~)
  Description: PL/Perl procedural language for PostgreSQL 11
   PL/Perl enables an SQL developer to write procedural language functions
   for PostgreSQL 11 in Perl.  You need this package if you have any
-@@ -269,13 +262,13 @@
+@@ -269,13 +265,14 @@
  #py2# .
  #py2# PostgreSQL is an object-relational SQL database management system.
  
@@ -140,11 +146,12 @@
   ${misc:Depends},
   ${shlibs:Depends}
 -Provides: postgresql-plpython3
-+Provides: percona-postgresql-plpython3, postgresql-plpython3, postgresql-11-plpython3
++Provides: percona-postgresql-plpython3, postgresql-plpython3 (= 2:11.6-2~), postgresql-11-plpython3 (= 2:11.6-2~)
++Replaces: postgresql-plpython3 (<= 11.6-2~), postgresql-11-plpython3 (<= 11.6-2~)
  Description: PL/Python 3 procedural language for PostgreSQL 11
   PL/Python 3 enables an SQL developer to write procedural language functions
   for PostgreSQL 11 in Python 3.  You need this package if you have any
-@@ -283,13 +276,13 @@
+@@ -283,13 +280,14 @@
   .
   PostgreSQL is an object-relational SQL database management system.
  
@@ -157,7 +164,8 @@
   ${misc:Depends},
   ${shlibs:Depends}
 -Provides: postgresql-pltcl
-+Provides: percona-postgresql-pltcl, postgresql-pltcl, postgresql-11-pltcl
++Provides: percona-postgresql-pltcl, postgresql-pltcl (= 2:11.6-2~), postgresql-11-pltcl (= 2:11.6-2~)
++Replaces: postgresql-pltcl (<= 11.6-2~), postgresql-11-pltcl (<= 11.6-2~)
  Description: PL/Tcl procedural language for PostgreSQL 11
   PL/Tcl enables an SQL developer to write procedural language functions
   for PostgreSQL 11 in Tcl.  You need this package if you have any
