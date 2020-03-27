@@ -167,16 +167,26 @@ get_database(){
         patch -p0 < build-ps/rpm/mysql-5.7-sharedlib-rename.patch
     fi
     mkdir bld
+    wget https://jenkins.percona.com/downloads/boost/boost_1_70_0.tar.gz
+    tar -xvzf boost_1_70_0.tar.gz
+    mkdir -p $WORKDIR/boost
+    mv boost_1_70_0/* $WORKDIR/boost/
+    rm -rf boost_1_70_0 boost_1_70_0.tar.gz
     cd bld
     if [ "x$OS" = "xrpm" ]; then
         if [ $RHEL != 6 ]; then
+            #uncomment once boost downloads are fixed
             #cmake .. -DDOWNLOAD_BOOST=1 -DENABLE_DOWNLOADS=1 -DWITH_SSL=system -DWITH_BOOST=$WORKDIR/boost -DWITH_PROTOBUF=bundled
-            cmake .. -DDOWNLOAD_BOOST=1 -DENABLE_DOWNLOADS=1 -DWITH_SSL=system -DWITH_BOOST=$WORKDIR/boost -DWITH_PROTOBUF=bundled
+            cmake .. -DENABLE_DOWNLOADS=1 -DWITH_SSL=system -DWITH_BOOST=$WORKDIR/boost -DWITH_PROTOBUF=bundled
         else
-            cmake .. -DDOWNLOAD_BOOST=1 -DENABLE_DOWNLOADS=1 -DWITH_SSL=/usr/local/openssl11 -DWITH_BOOST=$WORKDIR/boost -DWITH_PROTOBUF=bundled
+            #uncomment once boost downloads are fixed
+            #cmake .. -DDOWNLOAD_BOOST=1 -DENABLE_DOWNLOADS=1 -DWITH_SSL=/usr/local/openssl11 -DWITH_BOOST=$WORKDIR/boost -DWITH_PROTOBUF=bundled
+            cmake .. -DENABLE_DOWNLOADS=1 -DWITH_SSL=/usr/local/openssl11 -DWITH_BOOST=$WORKDIR/boost -DWITH_PROTOBUF=bundled
         fi
     else
-        cmake .. -DDOWNLOAD_BOOST=1 -DENABLE_DOWNLOADS=1 -DWITH_SSL=system -DWITH_BOOST=$WORKDIR/boost -DWITH_PROTOBUF=bundled
+        #uncomment once boost downloads are fixed
+        #cmake .. -DDOWNLOAD_BOOST=1 -DENABLE_DOWNLOADS=1 -DWITH_SSL=system -DWITH_BOOST=$WORKDIR/boost -DWITH_PROTOBUF=bundled
+        cmake .. -DENABLE_DOWNLOADS=1 -DWITH_SSL=system -DWITH_BOOST=$WORKDIR/boost -DWITH_PROTOBUF=bundled
     fi
     cmake --build . --target mysqlclient
     cmake --build . --target mysqlxclient
@@ -266,7 +276,7 @@ build_oci_sdk(){
     fi
     . oci_sdk/bin/activate
     if [ "x$OS" = "xdeb" ]; then
-        if [ "x$OS_NAME" = "buster" -o  ]; then
+        if [ "x$OS_NAME" = "buster" -o "x$OS_NAME" = "focal" ]; then
             pip3 install -r requirements.txt
             pip3 install -e .
         else
@@ -413,7 +423,6 @@ install_deps() {
         fi
     else
         apt-get -y install dirmngr || true
-        add_percona_apt_repo
         apt-get update
         apt-get -y install dirmngr || true
         apt-get -y install lsb-release wget
@@ -424,21 +433,16 @@ install_deps() {
             echo "waiting"
         done
         apt-get -y purge eatmydata || true
-        echo "deb http://jenkins.percona.com/apt-repo/ ${DIST} main" > percona-dev.list
-        mv -f percona-dev.list /etc/apt/sources.list.d/
-        wget -q -O - http://jenkins.percona.com/apt-repo/8507EFA5.pub | sudo apt-key add -
-        wget -q -O - http://jenkins.percona.com/apt-repo/CD2EFD2A.pub | sudo apt-key add -
-        apt-get update
         apt-get -y install psmisc
         apt-get -y install libsasl2-modules:amd64 || apt-get -y install libsasl2-modules
         apt-get -y install dh-systemd || true
         apt-get -y install curl bison cmake perl libssl-dev gcc g++ libaio-dev libldap2-dev libwrap0-dev gdb unzip gawk
         apt-get -y install lsb-release libmecab-dev libncurses5-dev libreadline-dev libpam-dev zlib1g-dev libcurl4-openssl-dev
-        apt-get -y install libldap2-dev libnuma-dev libjemalloc-dev libeatmydata libc6-dbg valgrind libjson-perl python-mysqldb libsasl2-dev
-        apt-get -y install libmecab2 mecab mecab-ipadic libicu-devel
+        apt-get -y install libldap2-dev libnuma-dev libjemalloc-dev libeatmydata libc6-dbg valgrind libjson-perl libsasl2-dev
+        apt-get -y install libmecab2 mecab mecab-ipadic libicu-dev
         apt-get -y install build-essential devscripts doxygen doxygen-gui graphviz rsync libprotobuf-dev protobuf-compiler
         apt-get -y install cmake autotools-dev autoconf automake build-essential devscripts debconf debhelper fakeroot libtool
-        apt-get -y install libicu-dev pkg-config
+        apt-get -y install libicu-dev pkg-config zip
         apt-get -y install libtirpc
         
         if [ "x$OS_NAME" = "xstretch" ]; then
@@ -447,10 +451,22 @@ install_deps() {
             apt-get -y install gcc-4.9 g++-4.9
             sed -i 's;deb http://ftp.us.debian.org/debian/ jessie main contrib non-free;;' /etc/apt/sources.list
             apt-get update
+        elif [ "x$OS_NAME" = "xfocal" ]; then
+	    apt-get -y install python3-mysqldb
+            echo "deb http://archive.ubuntu.com/ubuntu bionic main restricted" >> /etc/apt/sources.list
+            echo "deb http://archive.ubuntu.com/ubuntu bionic-updates main restricted" >> /etc/apt/sources.list
+            echo "deb http://archive.ubuntu.com/ubuntu bionic universe" >> /etc/apt/sources.list
+            apt-get update
+            apt-get -y install gcc-4.8 g++-4.8
+            sed -i 's;deb http://archive.ubuntu.com/ubuntu bionic main restricted;;' /etc/apt/sources.list
+            sed -i 's;deb http://archive.ubuntu.com/ubuntu bionic-updates main restricted;;' /etc/apt/sources.list
+            sed -i 's;deb http://archive.ubuntu.com/ubuntu bionic universe;;' /etc/apt/sources.list
+            apt-get update
         else
+	    apt-get -y install python-mysqldb
             apt-get -y install gcc-4.8 g++-4.8
         fi
-        apt-get -y install python python-dev zip
+        apt-get -y install python python-dev
         apt-get -y install python27-dev
         apt-get -y install python3 python3-pip
         PIP_UTIL="pip3"
@@ -747,6 +763,10 @@ build_deb(){
         sed -i 's:} 2>/dev/null:} 2>/dev/null\n\tmv debian/tmp/usr/local/* debian/tmp/usr/\n\trm -fr debian/tmp/usr/local\n\trm -fr debian/tmp/usr/bin/mysqlshrec:' debian/rules
     fi
     sed -i 's:, libprotobuf-dev, protobuf-compiler::' debian/control
+    if [ "x$OS_NAME" = "xfocal" ]; then
+        sed -i 201,211d mysqlshdk/scripting/python_context.cc
+        grep -r "Werror" * | awk -F ':' '{print $1}' | sort | uniq | xargs sed -i 's/-Werror/-Wno-error/g'
+    fi
 
     dch -b -m -D "$DEBIAN_VERSION" --force-distribution -v "${VERSION}-${RELEASE}-${DEB_RELEASE}.${DEBIAN_VERSION}" 'Update distribution'
     dpkg-buildpackage -rfakeroot -uc -us -b
