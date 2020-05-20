@@ -270,11 +270,13 @@ build_oci_sdk(){
             pip3 install -r requirements.txt
             pip3 install -e .
         else
+            pip install --upgrade pip
             pip install -r requirements.txt
             pip install -e .
         fi
     else
         if [ $RHEL = 7 ]; then
+            pip install --upgrade pip
             pip install --user -r requirements.txt
             pip install --user -e .
         else
@@ -413,7 +415,7 @@ install_deps() {
         fi
     else
         apt-get -y install dirmngr || true
-        add_percona_apt_repo
+#        add_percona_apt_repo
         apt-get update
         apt-get -y install dirmngr || true
         apt-get -y install lsb-release wget
