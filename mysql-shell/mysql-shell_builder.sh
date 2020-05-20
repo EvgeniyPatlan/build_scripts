@@ -280,11 +280,13 @@ build_oci_sdk(){
             pip3 install -r requirements.txt
             pip3 install -e .
         else
+            pip install --upgrade pip
             pip install -r requirements.txt
             pip install -e .
         fi
     else
         if [ $RHEL = 7 ]; then
+            pip install --upgrade pip
             pip install --user -r requirements.txt
             pip install --user -e .
         else
@@ -726,7 +728,7 @@ build_deb(){
         echo "It is not possible to build source deb here"
         exit 1
     fi
-    for file in 'dsc' 'orig.tar.gz' 'changes' 'debian.tar*'
+    for file in 'dsc' 'orig.tar.gz' 'changes' 
     do
         ls $WORKDIR */*
         get_deb_sources $file
