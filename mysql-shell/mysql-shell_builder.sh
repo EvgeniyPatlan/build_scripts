@@ -287,8 +287,8 @@ build_oci_sdk(){
     else
         if [ $RHEL = 7 ]; then
             pip install --upgrade pip
-            pip install --user -r requirements.txt
-            pip install --user -e .
+            pip install -r requirements.txt
+            pip install -e .
         else
             pip3 install -r requirements.txt
             pip3 install -e .
@@ -352,16 +352,18 @@ install_deps() {
         ARCH=$(echo $(uname -m) | sed -e 's:i686:i386:g')
         add_percona_yum_repo
         if [ $RHEL = 8 ]; then
+            yum -y install dnf-plugins-core
+            yum config-manager --set-enabled PowerTools
             yum -y install binutils gcc gcc-c++ tar rpm-build rsync bison glibc glibc-devel libstdc++-devel libtirpc-devel make openssl-devel pam-devel perl perl-JSON perl-Memoize 
             yum -y install automake autoconf cmake jemalloc jemalloc-devel
             yum -y install libaio-devel ncurses-devel numactl-devel readline-devel time
-            wget https://rpmfind.net/linux/fedora/linux/releases/29/Everything/x86_64/os/Packages/r/rpcgen-1.4-1.fc29.x86_64.rpm
-            yum -y install rpcgen-1.4-1.fc29.x86_64.rpm
+            yum -y install rpcgen
             yum -y install automake m4 libtool python2-devel zip rpmlint
             yum -y install gperf ncurses-devel perl
             yum -y install libcurl-devel
             yum -y install perl-Env perl-Data-Dumper perl-JSON MySQL-python perl-Digest perl-Digest-MD5 perl-Digest-Perl-MD5 || true
-            yum -y install libicu-devel automake m4 libtool python2-devel zip rpmlint python3 python3-pip git python3-virtualenv
+            yum -y install libicu-devel automake m4 libtool python2-devel zip rpmlint python3 python3-pip git python3-virtualenv 
+            yum -y install openldap-devel
             pip3 install --upgrade pip
             pip3 install virtualenv
             build_oci_sdk
@@ -393,8 +395,11 @@ install_deps() {
             source /opt/rh/rh-python36/enable
         fi
         if [ "x$RHEL" = "x6" ]; then
+            yum install -y https://repo.percona.com/yum/percona-release-latest.noarch.rpm
+            percona-release enable tools testing
             yum -y install Percona-Server-shared-56
             yum install -y percona-devtoolset-gcc percona-devtoolset-binutils python-devel percona-devtoolset-gcc-c++ percona-devtoolset-libstdc++-devel percona-devtoolset-valgrind-devel
+            yum install -y patchelf
             sed -i "668s:(void:(const void:" /usr/include/openssl/bio.h
             cd ${WORKDIR}
             wget https://github.com/openssl/openssl/archive/OpenSSL_1_1_1d.tar.gz
@@ -428,6 +433,8 @@ install_deps() {
         apt-get update
         apt-get -y install dirmngr || true
         apt-get -y install lsb-release wget
+        wget https://repo.percona.com/apt/percona-release_latest.$(lsb_release -sc)_all.deb && dpkg -i percona-release_latest.$(lsb_release -sc)_all.deb
+        percona-release enable tools testing
         export DEBIAN_FRONTEND="noninteractive"
         export DIST="$(lsb_release -sc)"
         until sudo apt-get update; do
@@ -440,12 +447,14 @@ install_deps() {
         apt-get -y install dh-systemd || true
         apt-get -y install curl bison cmake perl libssl-dev gcc g++ libaio-dev libldap2-dev libwrap0-dev gdb unzip gawk
         apt-get -y install lsb-release libmecab-dev libncurses5-dev libreadline-dev libpam-dev zlib1g-dev libcurl4-openssl-dev
-        apt-get -y install libldap2-dev libnuma-dev libjemalloc-dev libeatmydata libc6-dbg valgrind libjson-perl libsasl2-dev
+        apt-get -y install libldap2-dev libnuma-dev libjemalloc-dev libc6-dbg valgrind libjson-perl libsasl2-dev
+        apt-get -y install libeatmydata
         apt-get -y install libmecab2 mecab mecab-ipadic libicu-dev
         apt-get -y install build-essential devscripts doxygen doxygen-gui graphviz rsync libprotobuf-dev protobuf-compiler
         apt-get -y install cmake autotools-dev autoconf automake build-essential devscripts debconf debhelper fakeroot libtool
         apt-get -y install libicu-dev pkg-config zip
         apt-get -y install libtirpc
+        apt-get -y install patchelf
         
         if [ "x$OS_NAME" = "xstretch" ]; then
             echo "deb http://ftp.us.debian.org/debian/ jessie main contrib non-free" >> /etc/apt/sources.list
@@ -556,7 +565,7 @@ build_srpm(){
     cd $WORKDIR
     get_tar "source_tarball"
     rm -fr rpmbuild
-    ls | grep -v percona-mysql-shell*.tar.* | grep -v protobuf | xargs rm -rf
+    ls | grep -v percona-mysql-shell-*.tar.* | grep -v protobuf | xargs rm -rf
     mkdir -vp rpmbuild/{SOURCES,SPECS,BUILD,SRPMS,RPMS}
     TARFILE=$(basename $(find . -name 'percona-mysql-shell-*.tar.gz' | sort | tail -n1))
     NAME=$(echo ${TARFILE}| awk -F '-' '{print $1"-"$2}')
@@ -579,11 +588,11 @@ build_srpm(){
     sed -i '/with_protobuf/,/endif/d' mysql-shell.spec
     sed -i 's/@COMMERCIAL_VER@/0/g' mysql-shell.spec
     sed -i 's/@PRODUCT_SUFFIX@//g' mysql-shell.spec
-    sed -i 's/@MYSH_NO_DASH_VERSION@/8.0.19/g' mysql-shell.spec
+    sed -i 's/@MYSH_NO_DASH_VERSION@/8.0.20/g' mysql-shell.spec
     sed -i "s:@RPM_RELEASE@:${RPM_RELEASE}:g" mysql-shell.spec
     sed -i 's/@LICENSE_TYPE@/GPLv2/g' mysql-shell.spec
     sed -i 's/@PRODUCT@/MySQL Shell/' mysql-shell.spec
-    sed -i 's/@MYSH_VERSION@/8.0.19/g' mysql-shell.spec
+    sed -i 's/@MYSH_VERSION@/8.0.20/g' mysql-shell.spec
     sed -i "s:-DHAVE_PYTHON=1: -DHAVE_PYTHON=2 -DWITH_PROTOBUF=bundled -DPROTOBUF_INCLUDE_DIRS=/usr/local/include -DPROTOBUF_LIBRARIES=/usr/local/lib/libprotobuf.a -DWITH_STATIC_LINKING=ON -DMYSQL_EXTRA_LIBRARIES='-lz -ldl -lssl -lcrypto -licui18n -licuuc -licudata' :" mysql-shell.spec
     sed -i "s|BuildRequires:  python-devel|%if 0%{?rhel} > 7\nBuildRequires:  python2-devel\n%else\nBuildRequires:  python-devel\n%endif|" mysql-shell.spec
     mv mysql-shell.spec percona-mysql-shell.spec
@@ -728,7 +737,7 @@ build_deb(){
         echo "It is not possible to build source deb here"
         exit 1
     fi
-    for file in 'dsc' 'orig.tar.gz' 'changes' 
+    for file in 'dsc' 'orig.tar.gz' 'changes' 'debian.tar.xz'
     do
         ls $WORKDIR */*
         get_deb_sources $file
@@ -766,7 +775,6 @@ build_deb(){
     fi
     sed -i 's:, libprotobuf-dev, protobuf-compiler::' debian/control
     if [ "x$OS_NAME" = "xfocal" ]; then
-        sed -i 201,211d mysqlshdk/scripting/python_context.cc
         grep -r "Werror" * | awk -F ':' '{print $1}' | sort | uniq | xargs sed -i 's/-Werror/-Wno-error/g'
     fi
 
@@ -911,13 +919,13 @@ ARCH=
 OS=
 PROTOBUF_REPO="https://github.com/protocolbuffers/protobuf.git"
 SHELL_REPO="https://github.com/mysql/mysql-shell.git"
-SHELL_BRANCH="8.0.19"
+SHELL_BRANCH="8.0.20"
 PROTOBUF_BRANCH=v3.6.1
 INSTALL=0
 RPM_RELEASE=1
 DEB_RELEASE=1
 REVISION=0
-BRANCH="release-8.0.19-10"
+BRANCH="release-8.0.20-11"
 RPM_RELEASE=1
 DEB_RELEASE=1
 YASSL=0
